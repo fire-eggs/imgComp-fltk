@@ -37,6 +37,8 @@ public:
 
 };
 
+MainWin* _window;
+
 #define BTN_BOX_HALFHIGH 16
 #define BTN_BOX_HIGH BTN_BOX_HALFHIGH * 2
 #define BTN_HIGH BTN_BOX_HIGH - 6
@@ -166,7 +168,8 @@ void load_cb(Fl_Widget* w, void* d)
         return;
 
     clear_controls();
-
+    Fl::flush();
+    
     // load phash
     readPhash(loadfile, sourceId);
     sourceId++;
@@ -180,6 +183,31 @@ void load_cb(Fl_Widget* w, void* d)
 
     // load pairlist into browser
     load_listbox();
+}
+
+double getNiceFileSize(const char *path)
+{
+    struct stat st;
+    stat(path, &st);
+    auto sizeK = st.st_size / 1024.0;
+    return sizeK;
+}
+
+void updateTitle(const char *pathL, Fl_Shared_Image *imgL, const char *pathR, Fl_Shared_Image *imgR)
+{
+    int ilw = imgL->w();
+    int ilh = imgL->h();
+    int ild = imgL->d() * 8;
+    int irw = imgR->w();
+    int irh = imgR->h();
+    int ird = imgR->d() * 8;
+
+    auto fsl = getNiceFileSize(pathL);
+    auto fsr = getNiceFileSize(pathR);
+    
+    char buff[256];
+    sprintf(buff, "(%d,%dx%d)[%2gK] : (%d,%dx%d)[%2gK]", ilh, ilw, ild, fsl, irh, irw, ird, fsr);
+    _window->label(buff);
 }
 
 void onListClick(Fl_Widget* w, void* d)
@@ -212,6 +240,7 @@ void onListClick(Fl_Widget* w, void* d)
         return;
     }
 
+    // TODO size images proportionally to view size
     // both images exist
     int iw = _leftImgView->w();
     int ih = _leftImgView->h();
@@ -224,6 +253,8 @@ void onListClick(Fl_Widget* w, void* d)
     _leftImgView->image(imgL->copy(iw, ih));
     _rightImgView->image(imgR->copy(iw,ih));
 
+    updateTitle(pathL, imgL, pathR, imgR);
+    
     imgL->release();
     imgR->release();
 
@@ -307,6 +338,8 @@ int main(int argc, char** argv)
 
     initShow();
 
+    _window = &window;
+    
     window.show(argc, argv);
     return Fl::run();
 
