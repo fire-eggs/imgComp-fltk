@@ -5,9 +5,16 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Shared_Image.H>
+#include <FL/fl_ask.H> // fl_alert
 
 #include "filedata.h"
 #include "ViewWin.h"
+#include "prefs.h"
+
+#include <unistd.h> // access
+#include <stdarg.h> // va_start for log
+
+Prefs* _PREFS;
 
 int sourceId;
 bool filterSame;
@@ -22,6 +29,8 @@ Fl_Button* _btnRView;
 Fl_Button* _btnDiff;
 Fl_Button* _btnDiffS;
 
+char _logpath[MAXNAMLEN * 2];
+
 int widths[] = {40, 340, 340, 0};
 
 // NOTE: relying on toggle menus auto initialized to OFF
@@ -29,7 +38,7 @@ int widths[] = {40, 340, 340, 0};
 class MainWin : public Fl_Double_Window
 {
 public:
-    MainWin(int w, int h) : Fl_Double_Window(w,h)
+    MainWin(int x, int y, int w, int h) : Fl_Double_Window(x, y, w,h)
     {}
 
     void resize(int, int, int, int) override;
@@ -59,6 +68,8 @@ void MainWin::resize(int x, int y, int w, int h)
     widths[1] = (w - 40) / 2;
     widths[2] = widths[1];
     _listbox->column_widths(widths);
+    
+    _PREFS->setWinRect(MAIN_PREFIX, x, y, w, h);
 }
 
 int MainWin::handle(int event)
@@ -67,8 +78,115 @@ int MainWin::handle(int event)
     return Fl_Double_Window::handle(event);
 }
 
+void RemoveMissingFile(const char *path)
+{
+    // TODO
+}
+
+void log(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    char buff[1024];
+    vsnprintf(buff, 1024, fmt, ap);
+    
+    FILE *logf = fopen(_logpath, "a");
+    fputs(buff, logf);
+    fputc('\n', logf);
+    fclose(logf);
+}
+
+bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
+{
+    // rename the source file to be a duplicate of the destination
+    // i.e. <sourcebase>/<srcfile> to <sourcebase>/dup0_<destfile>
+    
+    // 1. determine the destination file name [not path!]
+    const char *destfname = strrchr(destpath, '/');
+    if (destfname) 
+        ++destfname;
+    else
+        return false; // TODO destination not a legal path+filename ?
+        
+    // 2. get the source "base" path [path up to the filename]        
+    const char *srcbase = strrchr(srcpath, '/');
+    if (!srcbase)
+        return false; // TODO source not a legal path+filename ?
+        
+    char spath[MAXNAMLEN];
+    memset(spath, 0, MAXNAMLEN);
+    strncpy(spath, srcpath, (srcbase - srcpath)); // NOTE: do not want the trailing slash
+    
+    // 3. test up to 10 numbered names, using provided format
+    char buff[MAXNAMLEN];
+    int i;
+    for (i = 0; i < 10; i++)
+    {
+        sprintf(buff, nameForm, spath, i, destfname);
+        
+//         printf("MoveFile: srcpath: %s\n", srcpath);
+//         printf("MoveFile: destpath: %s\n", destpath);
+//         printf("MoveFile: outpath: %s\n", buff);       
+        
+        log("MoveFile: attempt to rename %s to %s", srcpath, buff);
+        if (access(buff, F_OK) != -1)
+            log("MoveFile: target file already exists");
+        else
+        {
+            int res = rename(srcpath, buff);
+            if (res)
+                log("MoveFile: failed to rename to target file");
+            else
+            {
+                log("MoveFile: success");
+                break; // success
+            }
+        }
+    }
+    if (i == 10)
+        fl_alert("All attempts to rename the file failed. See the log.");
+    return true;
+}
+
+void btnDup(bool left)
+{
+    // rename one of the images as a duplicate of the other
+    // bool left : rename the 'left' image
+
+    // TODO the next 7 lines as a common subroutine
+    int line = _listbox->value();
+    if (line == 0)
+        return;
+
+    int data = (intptr_t)_listbox->data(line);
+
+    Pair* p = GetPair(data);
+    
+    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+    auto target = left ? pathR : pathL;
+    auto source = left ? pathL : pathR;
+    
+    // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
+    if (MoveFile("%s/dup%d_%s", target, source))
+        RemoveMissingFile(source);
+}
+
+void btnDupL_cb(Fl_Widget* w, void* d)
+{
+    btnDup(true);
+}
+
+void btnDupR_cb(Fl_Widget* w, void* d)
+{
+    btnDup(false);
+}
+
 void btnView(bool left)
 {
+    // activate the view window with the plain images.
+    // bool left: start with the 'left' image
+    
     int line = _listbox->value();
     if (line == 0)
         return;
@@ -79,12 +197,12 @@ void btnView(bool left)
     showView(p, left);
 }
 
-void btnL_cb(Fl_Widget* w, void* d)
+void btnViewL_cb(Fl_Widget* w, void* d)
 {
     btnView(true);
 }
 
-void btnR_cb(Fl_Widget* w, void* d)
+void btnViewR_cb(Fl_Widget* w, void* d)
 {
     btnView(false);
 }
@@ -169,6 +287,8 @@ void load_cb(Fl_Widget* w, void* d)
 
     clear_controls();
     Fl::flush();
+    
+    // TODO following in a sub-process
     
     // load phash
     readPhash(loadfile, sourceId);
@@ -286,11 +406,20 @@ Fl_Menu_Item mainmenuItems[] =
 
 int main(int argc, char** argv)
 {
+    // set up the log file
+    getcwd(_logpath, sizeof(_logpath));
+    strcat(_logpath, "/imgcomp.log");
+
+    // use remembered main window size
+    _PREFS = new Prefs();  
+    int x, y, w, h;
+    _PREFS->getWinRect(MAIN_PREFIX, x, y, w, h);
+    
     filterSame = false;
 
     fl_register_images();
 
-    MainWin window(720, 520);
+    MainWin window(x, y, w, h);
 
     Fl_Menu_Bar* menu = new Fl_Menu_Bar(0, 0, window.w(), 25);
     menu->copy(mainmenuItems);
@@ -309,18 +438,20 @@ int main(int argc, char** argv)
 
     _btnLDup = new Fl_Button(5, BTNBOXY+3, 50, BTN_HIGH);
     _btnLDup->label("Dup");
+    _btnLDup->callback(btnDupL_cb);
     _btnLView = new Fl_Button(60, BTNBOXY + 3, 50, BTN_HIGH);
     _btnLView->label("View");
-    _btnLView->callback(btnL_cb);
+    _btnLView->callback(btnViewL_cb);
     _btnDiff = new Fl_Button(115, BTNBOXY + 3, 50, BTN_HIGH);
     _btnDiff->label("Diff");
     _btnDiffS = new Fl_Button(170, BTNBOXY + 3, 100, BTN_HIGH);
     _btnDiffS->label("Diff - Stretch");
     _btnRDup = new Fl_Button(275, BTNBOXY + 3, 50, BTN_HIGH);
     _btnRDup->label("Dup");
+    _btnRDup->callback(btnDupR_cb);
     _btnRView = new Fl_Button(330, BTNBOXY + 3, 50, BTN_HIGH);
     _btnRView->label("View");
-    _btnRView->callback(btnR_cb);
+    _btnRView->callback(btnViewR_cb);
 
     _btnBox->end();
 
