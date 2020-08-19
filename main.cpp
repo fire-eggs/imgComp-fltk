@@ -16,6 +16,7 @@
 
 Prefs* _PREFS;
 
+// TODO push into MainWin class?
 int sourceId;
 bool filterSame;
 Fl_Browser* _listbox;
@@ -23,11 +24,8 @@ Fl_Box* _leftImgView;
 Fl_Box* _rightImgView;
 Fl_Group* _btnBox;
 Fl_Button* _btnLDup;
-Fl_Button* _btnLView;
 Fl_Button* _btnRDup;
-Fl_Button* _btnRView;
 Fl_Button* _btnDiff;
-Fl_Button* _btnDiffS;
 
 char _logpath[MAXNAMLEN * 2];
 
@@ -80,7 +78,7 @@ int MainWin::handle(int event)
 
 void RemoveMissingFile(const char *path)
 {
-    // TODO
+    // TODO remove all instances of the given path from the list
 }
 
 void log(const char *fmt, ...)
@@ -326,8 +324,10 @@ void updateTitle(const char *pathL, Fl_Shared_Image *imgL, const char *pathR, Fl
     auto fsr = getNiceFileSize(pathR);
     
     char buff[256];
-    sprintf(buff, "(%d,%dx%d)[%2gK] : (%d,%dx%d)[%2gK]", ilh, ilw, ild, fsl, irh, irw, ird, fsr);
+    snprintf(buff, 256, "(%d,%dx%d)[%2gK] : (%d,%dx%d)[%2gK]", ilh, ilw, ild, fsl, irh, irw, ird, fsr);
     _window->label(buff);
+    
+    // TODO update the state of Diff button depending on image dimensions
 }
 
 void onListClick(Fl_Widget* w, void* d)
@@ -340,8 +340,8 @@ void onListClick(Fl_Widget* w, void* d)
     const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
     const char* pathR = GetFD(p->FileRightDex)->Name->c_str();
 
-    printf("PathL: %s\n", pathL);
-    printf("PathR: %s\n", pathR);
+//     printf("PathL: %s\n", pathL);
+//     printf("PathR: %s\n", pathR);
 
     Fl_Shared_Image* imgL = Fl_Shared_Image::get(pathL);
     Fl_Shared_Image* imgR = Fl_Shared_Image::get(pathR);
@@ -387,6 +387,11 @@ void quit_cb(Fl_Widget* w, void* d)
     exit(0);
 }
 
+void viewLog_cb(Fl_Widget* w, void* d)
+{
+    // TODO popup the log file
+}
+
 Fl_Menu_Item mainmenuItems[] =
 {
     {"&File", 0, 0, 0, FL_SUBMENU},
@@ -396,9 +401,10 @@ Fl_Menu_Item mainmenuItems[] =
     {0},
 
     {"&Options", 0, 0, 0, FL_SUBMENU},
-    {"Fi&lter Same Phash", 0, filter_cb, 0, FL_MENU_TOGGLE}, // TODO toggle button
-    {"Lock Left Dup Button", 0, lockL_cb, 0, FL_MENU_TOGGLE}, // TODO toggle
-    {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE}, // TODO toggle
+    {"Fi&lter Same Phash", 0, filter_cb, 0, FL_MENU_TOGGLE},
+    {"Lock Left Dup Button", 0, lockL_cb, 0, FL_MENU_TOGGLE},
+    {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE},
+    {"View log file ...", 0, viewLog_cb, 0},
     {0},
 
     {0}
@@ -431,7 +437,6 @@ int main(int argc, char** argv)
 
     window.resizable(_listbox);
 
-    // TODO need callbacks
 #define BTNBOXY 235
     _btnBox = new Fl_Group(0, BTNBOXY, window.w(), BTN_BOX_HIGH);
     _btnBox->begin();
@@ -439,19 +444,24 @@ int main(int argc, char** argv)
     _btnLDup = new Fl_Button(5, BTNBOXY+3, 50, BTN_HIGH);
     _btnLDup->label("Dup");
     _btnLDup->callback(btnDupL_cb);
-    _btnLView = new Fl_Button(60, BTNBOXY + 3, 50, BTN_HIGH);
-    _btnLView->label("View");
-    _btnLView->callback(btnViewL_cb);
+    
+    Fl_Button *btnLView = new Fl_Button(60, BTNBOXY + 3, 50, BTN_HIGH);
+    btnLView->label("View");
+    btnLView->callback(btnViewL_cb);
+    
     _btnDiff = new Fl_Button(115, BTNBOXY + 3, 50, BTN_HIGH);
     _btnDiff->label("Diff");
-    _btnDiffS = new Fl_Button(170, BTNBOXY + 3, 100, BTN_HIGH);
-    _btnDiffS->label("Diff - Stretch");
+    
+    Fl_Button *btnDiffS = new Fl_Button(170, BTNBOXY + 3, 100, BTN_HIGH);
+    btnDiffS->label("Diff - Stretch");
+    
     _btnRDup = new Fl_Button(275, BTNBOXY + 3, 50, BTN_HIGH);
     _btnRDup->label("Dup");
     _btnRDup->callback(btnDupR_cb);
-    _btnRView = new Fl_Button(330, BTNBOXY + 3, 50, BTN_HIGH);
-    _btnRView->label("View");
-    _btnRView->callback(btnViewR_cb);
+    
+    Fl_Button* btnRView = new Fl_Button(330, BTNBOXY + 3, 50, BTN_HIGH);
+    btnRView->label("View");
+    btnRView->callback(btnViewR_cb);
 
     _btnBox->end();
 
