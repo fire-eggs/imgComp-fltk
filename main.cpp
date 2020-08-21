@@ -76,6 +76,20 @@ int MainWin::handle(int event)
     return Fl_Double_Window::handle(event);
 }
 
+Pair *GetCurrentPair()
+{
+    // Find the image pair currently selected in the listbox (null if none)
+    
+    int line = _listbox->value();
+    if (line == 0)
+        return NULL;
+
+    int data = (intptr_t)_listbox->data(line);
+
+    Pair* p = GetPair(data);
+    return p;
+}
+
 void RemoveMissingFile(const char *path)
 {
     // TODO remove all instances of the given path from the list
@@ -151,14 +165,9 @@ void btnDup(bool left)
     // rename one of the images as a duplicate of the other
     // bool left : rename the 'left' image
 
-    // TODO the next 7 lines as a common subroutine
-    int line = _listbox->value();
-    if (line == 0)
+    Pair* p = GetCurrentPair();
+    if (!p)
         return;
-
-    int data = (intptr_t)_listbox->data(line);
-
-    Pair* p = GetPair(data);
     
     auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
     auto pathR = GetFD(p->FileRightDex)->Name->c_str();
@@ -185,14 +194,12 @@ void btnView(bool left)
     // activate the view window with the plain images.
     // bool left: start with the 'left' image
     
-    int line = _listbox->value();
-    if (line == 0)
+    Pair* p = GetCurrentPair();
+    if (!p)
         return;
-
-    int data = (intptr_t)_listbox->data(line);
-
-    Pair* p = GetPair(data);
     showView(p, left);
+    
+    _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
 }
 
 void btnViewL_cb(Fl_Widget* w, void* d)
