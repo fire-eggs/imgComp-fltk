@@ -343,7 +343,13 @@ void updateTitle(const char *pathL, Fl_Shared_Image *imgL, const char *pathR, Fl
 
 void onListClick(Fl_Widget* w, void* d)
 {
+    if (_listbox->size() < 1) // list is now empty, done
+        return;
+    
     int line = _listbox->value();
+    if (!line) 
+        line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
+        
     int data = (intptr_t)_listbox->data(line);
 //    printf("LB: val: %d data:%d\n", line, data);
 
@@ -359,9 +365,9 @@ void onListClick(Fl_Widget* w, void* d)
 
     // imgL or imgR may be null [file missing]
     // Force selection of next entry
-    // TODO test multiple missing files
     if (!imgL || !imgR)
     {
+        // TODO do this w/o recursion!
         if (imgL) imgL->release();
         if (imgR) imgR->release();
         _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
@@ -391,6 +397,8 @@ void onListClick(Fl_Widget* w, void* d)
 
     _leftImgView->redraw();
     _rightImgView->redraw();
+    
+    // TODO ensure the current line is up a little bit - can't click to get to next line sometimes
 }
 
 void quit_cb(Fl_Widget* w, void* d)
