@@ -22,9 +22,13 @@ std::string* replaceStrChar(std::string *str, const std::string& replace, char c
   return str; // return our new string.
 }
 
+const char * gMount = "/run/user/1000/gvfs/smb-share:domain=troll,server=troll,share=g,user=kevin/";
+const char * yMount = "/run/user/1000/gvfs/smb-share:domain=192.168.111.157,server=192.168.111.157,share=sambashare,user=guest/";
+
 void readPhash(char* filename, int sourceId)
 {
     // TODO danbooru .phashc files do NOT have the firstline!
+    // TODO need general mechanism to xlate Windows drive letters!
 
     FILE* fptr = fl_fopen(filename, "r");
     char buffer[2048];
@@ -53,13 +57,24 @@ void readPhash(char* filename, int sourceId)
         FileData* fd = new FileData();
         fd->Name = new std::string(parts);
         
-        size_t dex = fd->Name->find_first_of("g:\\");
+        size_t dex = fd->Name->find("g:\\");
         if (dex != std::string::npos)
         {
-            fd->Name->replace(dex,3, "/run/user/1000/gvfs/smb-share:domain=troll,server=troll,share=g,user=kevin/");
+            fd->Name->replace(dex,3, gMount);
             replaceStrChar(fd->Name, "\\", '/');
             fd->Name->erase(remove(fd->Name->begin(), fd->Name->end(), '\r'), fd->Name->end());
         }
+        else
+        {
+            size_t dex = fd->Name->find("y:\\");
+            if (dex != std::string::npos)
+            {
+                fd->Name->replace(dex,3, yMount);
+                replaceStrChar(fd->Name, "\\", '/');
+                fd->Name->erase(remove(fd->Name->begin(), fd->Name->end(), '\r'), fd->Name->end());
+            }
+        }
+        
         fd->CRC = crc;
         fd->PHash = phash;
         fd->Source = sourceId;
