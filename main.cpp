@@ -334,14 +334,18 @@ void updateTitle(const char *pathL, Fl_Shared_Image *imgL, const char *pathR, Fl
     snprintf(buff, 256, "(%d,%dx%d)[%2gK] : (%d,%dx%d)[%2gK]", ilh, ilw, ild, fsl, irh, irw, ird, fsr);
     _window->label(buff);
     
-    // TODO update the state of Diff button depending on image dimensions
+    // Update the state of Diff button depending on image dimensions
+    if (ilw == irw && ilh == irh)
+        _btnDiff->activate();
+    else
+        _btnDiff->deactivate();
 }
 
 void onListClick(Fl_Widget* w, void* d)
 {
     int line = _listbox->value();
     int data = (intptr_t)_listbox->data(line);
-    printf("LB: val: %d data:%d\n", line, data);
+//    printf("LB: val: %d data:%d\n", line, data);
 
     Pair* p = GetPair(data);
     const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
