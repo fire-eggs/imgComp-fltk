@@ -5,6 +5,7 @@
 
 FileSet _data;
 std::vector<Pair*>* _pairlist;
+std::vector<Pair*>* _viewlist;
 
 #define LIMIT 50000
 
@@ -92,9 +93,13 @@ void readPhash(char* filename, int sourceId)
 
 void ClearPairList()
 {
+    if (_viewlist && _viewlist != _pairlist)
+        delete _viewlist;
+    _viewlist = NULL;
+    
     if (_pairlist)
     {
-        // TODO delete each Pair
+        // TODO delete each Pair?
         delete _pairlist;
     }
     _pairlist = new std::vector<Pair*>();
@@ -120,7 +125,8 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
     return (int)((x * h01) >> 56);
 }
 
-static int THRESHOLD = 11;
+// Throw out any pair where delta exceeds 5
+static int THRESHOLD = 11; // Hamming distance always a multiple of two
 
 void CompareOneFile(int me)
 {
@@ -153,8 +159,7 @@ void CompareFiles()
 
 size_t GetPairCount() // the number of visible pairs
 {
-    // TODO this will be the number of filtered pairs
-    return _pairlist->size(); 
+    return _viewlist->size(); 
 }
 
 char* GetPairText(int who) // the text to display for a specific pair
@@ -162,7 +167,7 @@ char* GetPairText(int who) // the text to display for a specific pair
     char buff[2048];
     buff[0] = '\0';
 
-    Pair* p = _pairlist->at(who);
+    Pair* p = _viewlist->at(who);
     if (p->Val == 0 && p->CRCMatch)
         strcat(buff, "DUP|");
     else
@@ -173,7 +178,6 @@ char* GetPairText(int who) // the text to display for a specific pair
     strcat(buff, dataL->Name->c_str());
     strcat(buff, "|");
     strcat(buff, dataR->Name->c_str());
-
 
     char* clone = new char[strlen(buff)+1];
     strcpy(clone, buff);
@@ -187,7 +191,7 @@ void* GetPairData(int who) // the data to store for a specific pair
 
 Pair* GetPair(int who)
 {
-    return _pairlist->at(who);
+    return _viewlist->at(who);
 }
 
 FileData* GetFD(int who)
@@ -224,9 +228,27 @@ int Compare(Pair *me, Pair* other)
     //return delta;
 }
 
+std::vector<Pair*> *FilterMatchingSources()
+{
+    std::vector<Pair*> *viewlist = new std::vector<Pair*>();
+    for (int i = 0; i < _pairlist->size(); i++)
+    {
+        Pair *p = _pairlist->at(i);
+        FileData* dataL = _data.Get(p->FileLeftDex);
+        FileData* dataR = _data.Get(p->FileRightDex);
+        
+        if (dataL->Source != dataR->Source)
+            viewlist->push_back(p);
+    }
+    return viewlist;
+}
+
 void FilterAndSort(bool filter)
 {
     std::sort(_pairlist->begin(), _pairlist->end(), Compare);
 
     // TODO filter
+    _viewlist = _pairlist;
+    if (filter)
+        _viewlist = FilterMatchingSources();
 }
