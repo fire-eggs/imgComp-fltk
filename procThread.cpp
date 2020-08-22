@@ -50,5 +50,6 @@ Fl_Thread proc_thread;
 void fire_proc_thread()
 {
     fl_create_thread(proc_thread, proc_func, NULL);
+    pthread_detach(*(pthread_t*)proc_thread);
 }
 
