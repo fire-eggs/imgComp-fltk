@@ -8,8 +8,8 @@ set (CMAKE_CXX_FLAGS "-fpermissive")
 INCLUDE_DIRECTORIES( /home/kevin/FLTK14 /home/kevin/FLTK14/build/debug /home/kevin/FLTK14 )
 LINK_DIRECTORIES(/home/kevin/FLTK14/build/debug/lib)
 
-add_executable( imgcomp main.cpp ViewWin.cpp filedata.cpp Fl_Image_Display.cxx )
+add_executable( imgcomp main.cpp ViewWin.cpp filedata.cpp Fl_Image_Display.cxx procThread.cpp )
 
-TARGET_LINK_LIBRARIES (imgcomp fltk fltk_images fltk_jpeg png z dl Xrender Xext Xft fontconfig pthread m X11)
+TARGET_LINK_LIBRARIES (imgcomp ${FLTK_LIBRARIES} pthread )
 
 install(TARGETS imgcomp RUNTIME DESTINATION bin)

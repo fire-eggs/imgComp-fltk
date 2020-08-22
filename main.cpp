@@ -14,6 +14,8 @@
 #include <unistd.h> // access
 #include <stdarg.h> // va_start for log
 
+#include "events.h"
+
 Prefs* _PREFS;
 
 // TODO push into MainWin class?
@@ -283,31 +285,35 @@ void load_listbox()
     _listbox->redraw();
 }
 
+char *loadfile;
+
 void load_cb(Fl_Widget* w, void* d)
 {
     char filename[1024] = "";
-    char* loadfile = fl_file_chooser("Open phash file", "*.phashc", filename);
+    loadfile = fl_file_chooser("Open phash file", "*.phashc", filename);
     if (!loadfile)
         return;
 
     clear_controls();
     Fl::flush();
     
-    // TODO following in a sub-process
+    fire_proc_thread();
     
-    // load phash
-    readPhash(loadfile, sourceId);
-    sourceId++;
-
-    // compare FileData pairs [ThreadComparePFiles]
-    // creates a pairlist
-    CompareFiles();
-
-    // viewing pairlist may be filtered [no matching sources]
-    FilterAndSort(filterSame);
-
-    // load pairlist into browser
-    load_listbox();
+//     TODO following in a sub-process
+//     
+//     load phash
+//     readPhash(loadfile, sourceId);
+//     sourceId++;
+// 
+//     compare FileData pairs [ThreadComparePFiles]
+//     creates a pairlist
+//     CompareFiles();
+// 
+//     viewing pairlist may be filtered [no matching sources]
+//     FilterAndSort(filterSame);
+// 
+//     load pairlist into browser
+//     load_listbox();
 }
 
 double getNiceFileSize(const char *path)
@@ -429,6 +435,33 @@ Fl_Menu_Item mainmenuItems[] =
     {0}
 };
 
+int handleSpecial(int event)
+{
+    switch (event)
+    {       
+        case KBR_START_LOAD:
+            _window->label("Loading...");
+            Fl::flush();
+            break;
+        case KBR_START_COMPARE:
+            _window->label("Diffing...");
+            Fl::flush();
+            break;
+        case KBR_START_SORT:
+            _window->label("Sorting...");
+            Fl::flush();
+            break;
+        case KBR_DONE_LOAD:
+            _window->label("Ready!");
+            load_listbox();
+            break;
+            
+        default:
+            return 0;
+    }
+    return 1;
+}
+
 int main(int argc, char** argv)
 {
     // set up the log file
@@ -450,6 +483,7 @@ int main(int argc, char** argv)
     menu->copy(mainmenuItems);
 
     _listbox = new Fl_Hold_Browser(0, 25, window.w(), 250);
+    _listbox->color(FL_BACKGROUND_COLOR, FL_GREEN);
     _listbox->callback(onListClick);
     _listbox->column_char('|');
     _listbox->column_widths(widths);
@@ -499,6 +533,7 @@ int main(int argc, char** argv)
     initShow();
 
     _window = &window;
+    Fl::add_handler(handleSpecial); // handle internal events
     
     window.show(argc, argv);
     return Fl::run();
