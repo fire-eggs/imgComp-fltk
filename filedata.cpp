@@ -102,7 +102,7 @@ void ClearPairList()
 
 void ClearData()
 {
-    // TODO delete _data
+    _data.Clear();
 }
 
 int phashHamDist(unsigned long long val1, unsigned long long val2)

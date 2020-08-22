@@ -60,6 +60,14 @@ public:
     {
         return Infos[index];
     }
+    
+    void Clear()
+    {
+        // TODO any memory leak from failing to delete contents of FileData instances?
+        for (int i=0; i < Infos.size(); i++)
+            delete Infos[i];
+        Infos.clear();
+    }
 };
 
 void readPhash(char*, int);
