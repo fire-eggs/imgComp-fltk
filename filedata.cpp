@@ -19,26 +19,24 @@ char _logpath[MAXNAMLEN * 2];
 void initlog()
 {
     // set up the log file
-    getcwd(_logpath, sizeof(_logpath));
+    auto res = getcwd(_logpath, sizeof(_logpath));
     strcat(_logpath, "/imgcomp.log");   
 }
 
 std::string getCurrentTimestamp()
 {
-    //using std::chrono::system_clock;
     auto currentTime = std::chrono::system_clock::now();
-    char buffer[80];
+    char buffer[40];
     char buffer2[80];
     
     auto transformed = currentTime.time_since_epoch().count() / 1000000;
 
-    short millis = transformed % 1000;
+    unsigned short millis = transformed % 1000;
 
-//    std::time_t tt;
     auto tt = std::chrono::system_clock::to_time_t ( currentTime );
     auto timeinfo = localtime (&tt);
-    strftime (buffer,80,"%F %H:%M:%S",timeinfo);
-    snprintf(buffer2, 80, "%s.%03d",buffer,(unsigned int)millis);
+    strftime(buffer,  40, "%F %H:%M:%S",timeinfo);
+    snprintf(buffer2, 80, "%s.%03u",buffer,millis);
 
     return std::string(buffer2);
 }
