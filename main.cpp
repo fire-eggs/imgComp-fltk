@@ -172,6 +172,7 @@ void onListClick(Fl_Widget* w, void* d)
     if (!imgL || !imgR)
     {
         // TODO do this w/o recursion!
+        // TODO needs to be done in the viewlist ???
         if (imgL) imgL->release();
         if (imgR) imgR->release();
         _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
@@ -207,6 +208,7 @@ void onListClick(Fl_Widget* w, void* d)
 
 void btnDup(bool left)
 {
+    // Common code for the two 'Dup' buttons
     // rename one of the images as a duplicate of the other
     // bool left : rename the 'left' image
 
@@ -225,7 +227,7 @@ void btnDup(bool left)
         int oldsel = _listbox->value();
         RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
         ReloadListbox();
-        _listbox->value(oldsel);
+        _listbox->select(oldsel);
         onListClick(0, 0); // force onclick       
     }
 }
@@ -378,6 +380,7 @@ int handleSpecial(int event)
             _window->label("Ready!");
             load_listbox();
             // do NOT flush here!
+            _listbox->select(1);
             onListClick(0,0);
             break;
             
