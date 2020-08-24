@@ -5,14 +5,12 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Shared_Image.H>
-#include <FL/fl_ask.H> // fl_alert
 
 #include "filedata.h"
 #include "ViewWin.h"
 #include "prefs.h"
 
-#include <unistd.h> // access
-#include <stdarg.h> // va_start for log
+#include <unistd.h> // getcwd
 
 #include "events.h"
 
@@ -28,8 +26,9 @@ Fl_Group* _btnBox;
 Fl_Button* _btnLDup;
 Fl_Button* _btnRDup;
 Fl_Button* _btnDiff;
+char *loadfile; // hacky
 
-char _logpath[MAXNAMLEN * 2];
+extern char *_logpath; // hacky
 
 int widths[] = {40, 340, 340, 0};
 
@@ -92,182 +91,6 @@ Pair *GetCurrentPair()
     return p;
 }
 
-void RemoveMissingFile(const char *path)
-{
-    // TODO remove all instances of the given path from the list
-}
-
-void log(const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    char buff[1024];
-    vsnprintf(buff, 1024, fmt, ap);
-    
-    FILE *logf = fopen(_logpath, "a");
-    fputs(buff, logf);
-    fputc('\n', logf);
-    fclose(logf);
-}
-
-bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
-{
-    // rename the source file to be a duplicate of the destination
-    // i.e. <sourcebase>/<srcfile> to <sourcebase>/dup0_<destfile>
-    
-    // 1. determine the destination file name [not path!]
-    const char *destfname = strrchr(destpath, '/');
-    if (destfname) 
-        ++destfname;
-    else
-        return false; // TODO destination not a legal path+filename ?
-        
-    // 2. get the source "base" path [path up to the filename]        
-    const char *srcbase = strrchr(srcpath, '/');
-    if (!srcbase)
-        return false; // TODO source not a legal path+filename ?
-        
-    char spath[MAXNAMLEN];
-    memset(spath, 0, MAXNAMLEN);
-    strncpy(spath, srcpath, (srcbase - srcpath)); // NOTE: do not want the trailing slash
-    
-    // 3. test up to 10 numbered names, using provided format
-    char buff[MAXNAMLEN];
-    int i;
-    for (i = 0; i < 10; i++)
-    {
-        sprintf(buff, nameForm, spath, i, destfname);
-        
-//         printf("MoveFile: srcpath: %s\n", srcpath);
-//         printf("MoveFile: destpath: %s\n", destpath);
-//         printf("MoveFile: outpath: %s\n", buff);       
-        
-        log("MoveFile: attempt to rename %s to %s", srcpath, buff);
-        if (access(buff, F_OK) != -1)
-            log("MoveFile: target file already exists");
-        else
-        {
-            int res = rename(srcpath, buff);
-            if (res)
-                log("MoveFile: failed to rename to target file");
-            else
-            {
-                log("MoveFile: success");
-                break; // success
-            }
-        }
-    }
-    if (i == 10)
-        fl_alert("All attempts to rename the file failed. See the log.");
-    return true;
-}
-
-void btnDup(bool left)
-{
-    // rename one of the images as a duplicate of the other
-    // bool left : rename the 'left' image
-
-    Pair* p = GetCurrentPair();
-    if (!p)
-        return;
-    
-    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
-    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
-    auto target = left ? pathR : pathL;
-    auto source = left ? pathL : pathR;
-    
-    // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
-    if (MoveFile("%s/dup%d_%s", target, source))
-        RemoveMissingFile(source);
-}
-
-void btnDupL_cb(Fl_Widget* w, void* d)
-{
-    btnDup(true);
-}
-
-void btnDupR_cb(Fl_Widget* w, void* d)
-{
-    btnDup(false);
-}
-
-void btnView(bool left)
-{
-    // activate the view window with the plain images.
-    // bool left: start with the 'left' image
-    
-    Pair* p = GetCurrentPair();
-    if (!p)
-        return;
-    showView(p, left);
-    
-    _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
-}
-
-void btnViewL_cb(Fl_Widget* w, void* d)
-{
-    btnView(true);
-}
-
-void btnViewR_cb(Fl_Widget* w, void* d)
-{
-    btnView(false);
-}
-
-void clear_controls()
-{
-    // used on load, Clear menu
-    _listbox->clear();
-
-// TODO memory leak?
-//    if (_leftImgView->image())
-//        _leftImgView->image()->release();
-//    if (_rightImgView->image())
-//        _rightImgView->image()->release();
-    
-    _leftImgView->image(NULL);
-    _rightImgView->image(NULL);
-    _leftImgView->redraw();
-    _rightImgView->redraw();
-}
-
-void clear_cb(Fl_Widget* w, void* d)
-{
-    // wipe all
-    sourceId = 0;
-
-    clear_controls();
-    ClearPairList();
-    ClearData();
-}
-
-void filter_cb(Fl_Widget* w, void* d)
-{
-    filterSame = !filterSame;
-
-    // clear_controls();
-    // get a filtered view list
-    // update the browser
-}
-
-void lockL_cb(Fl_Widget* w, void* d)
-{
-    // if left 'Dup' button enabled, disable it
-    if (_btnLDup->active())
-        _btnLDup->deactivate();
-    else
-        _btnLDup->activate();
-}
-
-void lockR_cb(Fl_Widget* w, void* d)
-{
-    // if right 'Dup' button enabled, disable it
-    if (_btnRDup->active())
-        _btnRDup->deactivate();
-    else
-        _btnRDup->activate();
-}
-
 void load_listbox()
 {
     size_t count = GetPairCount();
@@ -285,35 +108,10 @@ void load_listbox()
     _listbox->redraw();
 }
 
-char *loadfile;
-
-void load_cb(Fl_Widget* w, void* d)
+void ReloadListbox()
 {
-    char filename[1024] = "";
-    loadfile = fl_file_chooser("Open phash file", "*.phashc", filename);
-    if (!loadfile)
-        return;
-
-    clear_controls();
-    Fl::flush();
-    
-    fire_proc_thread();
-    
-//     TODO following in a sub-process
-//     
-//     load phash
-//     readPhash(loadfile, sourceId);
-//     sourceId++;
-// 
-//     compare FileData pairs [ThreadComparePFiles]
-//     creates a pairlist
-//     CompareFiles();
-// 
-//     viewing pairlist may be filtered [no matching sources]
-//     FilterAndSort(filterSame);
-// 
-//     load pairlist into browser
-//     load_listbox();
+    _listbox->clear();
+    load_listbox();
 }
 
 double getNiceFileSize(const char *path)
@@ -407,12 +205,137 @@ void onListClick(Fl_Widget* w, void* d)
     // TODO ensure the current line is up a little bit - can't click to get to next line sometimes
 }
 
-void quit_cb(Fl_Widget* w, void* d)
+void btnDup(bool left)
+{
+    // rename one of the images as a duplicate of the other
+    // bool left : rename the 'left' image
+
+    Pair* p = GetCurrentPair();
+    if (!p)
+        return;
+    
+    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+    auto target = left ? pathR : pathL;
+    auto source = left ? pathL : pathR;
+    
+    // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
+    if (MoveFile("%s/dup%d_%s", target, source))
+    {
+        int oldsel = _listbox->value();
+        RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
+        ReloadListbox();
+        _listbox->value(oldsel);
+        onListClick(0, 0); // force onclick       
+    }
+}
+
+void btnDupL_cb(Fl_Widget* w, void* d)
+{
+    btnDup(true);
+}
+
+void btnDupR_cb(Fl_Widget* w, void* d)
+{
+    btnDup(false);
+}
+
+void btnView(bool left)
+{
+    // activate the view window with the plain images.
+    // bool left: start with the 'left' image
+    
+    Pair* p = GetCurrentPair();
+    if (!p)
+        return;
+    showView(p, left);
+    
+    _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
+}
+
+void btnViewL_cb(Fl_Widget* w, void* d)
+{
+    btnView(true);
+}
+
+void btnViewR_cb(Fl_Widget* w, void* d)
+{
+    btnView(false);
+}
+
+void clear_controls()
+{
+    // used on load, Clear menu
+    _listbox->clear();
+
+// TODO memory leak?
+//    if (_leftImgView->image())
+//        _leftImgView->image()->release();
+//    if (_rightImgView->image())
+//        _rightImgView->image()->release();
+    
+    _leftImgView->image(NULL);
+    _rightImgView->image(NULL);
+    _leftImgView->redraw();
+    _rightImgView->redraw();
+}
+
+void clear_cb(Fl_Widget* w, void* d)
+{
+    // wipe all
+    sourceId = 0;
+
+    clear_controls();
+    ClearPairList();
+    ClearData();
+}
+
+void filter_cb(Fl_Widget* w, void* d)
+{
+    filterSame = !filterSame;
+
+    // clear_controls();
+    // get a filtered view list
+    // update the browser
+}
+
+void lockL_cb(Fl_Widget* w, void* d)
+{
+    // if left 'Dup' button enabled, disable it
+    if (_btnLDup->active())
+        _btnLDup->deactivate();
+    else
+        _btnLDup->activate();
+}
+
+void lockR_cb(Fl_Widget* w, void* d)
+{
+    // if right 'Dup' button enabled, disable it
+    if (_btnRDup->active())
+        _btnRDup->deactivate();
+    else
+        _btnRDup->activate();
+}
+
+void load_cb(Fl_Widget* , void* )
+{
+    char filename[1024] = "";
+    loadfile = fl_file_chooser("Open phash file", "*.phashc", filename);
+    if (!loadfile)
+        return;
+
+    clear_controls();
+    Fl::flush();
+    
+    fire_proc_thread();
+}
+
+void quit_cb(Fl_Widget* , void* )
 {
     exit(0);
 }
 
-void viewLog_cb(Fl_Widget* w, void* d)
+void viewLog_cb(Fl_Widget* , void* )
 {
     // TODO popup the log file
 }
@@ -454,6 +377,8 @@ int handleSpecial(int event)
         case KBR_DONE_LOAD:
             _window->label("Ready!");
             load_listbox();
+            // do NOT flush here!
+            onListClick(0,0);
             break;
             
         default:
@@ -464,10 +389,8 @@ int handleSpecial(int event)
 
 int main(int argc, char** argv)
 {
-    // set up the log file
-    getcwd(_logpath, sizeof(_logpath));
-    strcat(_logpath, "/imgcomp.log");
-
+    initlog();
+    
     // use remembered main window size
     _PREFS = new Prefs();  
     int x, y, w, h;

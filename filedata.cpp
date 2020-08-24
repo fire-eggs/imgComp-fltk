@@ -1,13 +1,39 @@
 #include "filedata.h"
 #include <FL/Fl.H> // fl_fopen
+#include <FL/fl_ask.H> // fl_alert
 #include <stdlib.h>
 #include <algorithm>
+#include <unistd.h> // access
+
+#include <stdarg.h> // va_start for log
 
 FileSet _data;
 std::vector<Pair*>* _pairlist;
 std::vector<Pair*>* _viewlist;
 
 #define LIMIT 50000
+
+char _logpath[MAXNAMLEN * 2];
+
+void initlog()
+{
+    // set up the log file
+    getcwd(_logpath, sizeof(_logpath));
+    strcat(_logpath, "/imgcomp.log");   
+}
+
+void log(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    char buff[1024];
+    vsnprintf(buff, 1024, fmt, ap);
+    
+    FILE *logf = fopen(_logpath, "a");
+    fputs(buff, logf);
+    fputc('\n', logf);
+    fclose(logf);
+}
 
 std::string* replaceStrChar(std::string *str, const std::string& replace, char ch) 
 {
@@ -247,8 +273,74 @@ void FilterAndSort(bool filter)
 {
     std::sort(_pairlist->begin(), _pairlist->end(), Compare);
 
-    // TODO filter
-    _viewlist = _pairlist;
+    // filter
     if (filter)
         _viewlist = FilterMatchingSources();
+    else
+        _viewlist = new std::vector<Pair*>(*_pairlist);
+}
+
+bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
+{
+    // rename the source file to be a duplicate of the destination
+    // i.e. <sourcebase>/<srcfile> to <sourcebase>/dup0_<destfile>
+    
+    // 1. determine the destination file name [not path!]
+    const char *destfname = strrchr(destpath, '/');
+    if (destfname) 
+        ++destfname;
+    else
+        return false; // TODO destination not a legal path+filename ?
+        
+    // 2. get the source "base" path [path up to the filename]        
+    const char *srcbase = strrchr(srcpath, '/');
+    if (!srcbase)
+        return false; // TODO source not a legal path+filename ?
+        
+    char spath[MAXNAMLEN];
+    memset(spath, 0, MAXNAMLEN);
+    strncpy(spath, srcpath, (srcbase - srcpath)); // NOTE: do not want the trailing slash
+    
+    // 3. test up to 10 numbered names, using provided format
+    char buff[MAXNAMLEN];
+    int i;
+    for (i = 0; i < 10; i++)
+    {
+        sprintf(buff, nameForm, spath, i, destfname);
+        
+//         printf("MoveFile: srcpath: %s\n", srcpath);
+//         printf("MoveFile: destpath: %s\n", destpath);
+//         printf("MoveFile: outpath: %s\n", buff);       
+        
+        log("MoveFile: attempt to rename %s to %s", srcpath, buff);
+        if (access(buff, F_OK) != -1)
+            log("MoveFile: target file already exists");
+        else
+        {
+            int res = rename(srcpath, buff);
+            if (res)
+                log("MoveFile: failed to rename to target file");
+            else
+            {
+                log("MoveFile: success");
+                break; // success
+            }
+        }
+    }
+    if (i == 10)
+        fl_alert("All attempts to rename the file failed. See the log.");
+    return true;
+}
+
+void RemoveMissingFile(int filedex)
+{
+    // Remove all instances of the given file from the list
+    int len = _viewlist->size() - 1;
+    for (int i= len; i >= 0; i--)
+    {
+        Pair *p = _viewlist->at(i);
+        if (p->FileLeftDex == filedex ||
+            p->FileRightDex == filedex)
+            _viewlist->erase(_viewlist->begin() + i);
+    }
 }

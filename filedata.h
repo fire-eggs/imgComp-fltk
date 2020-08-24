@@ -70,6 +70,8 @@ public:
     }
 };
 
+void initlog();
+
 void readPhash(char*, int);
 void CompareFiles();
 size_t GetPairCount(); // the number of visible pairs
@@ -83,3 +85,5 @@ void ClearPairList();
 void ClearData();
 void FilterAndSort(bool);
 
+bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath);
+void RemoveMissingFile(int filedex);
