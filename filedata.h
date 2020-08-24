@@ -70,6 +70,7 @@ public:
     }
 };
 
+void log(const char *fmt, ...);
 void initlog();
 
 void readPhash(char*, int);

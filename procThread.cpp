@@ -25,21 +25,25 @@ void* proc_func(void *p)
 {
     Fl::handle_(KBR_START_LOAD, 0);
     
+    log("load");
     // load phash
     readPhash(loadfile, sourceId);
     sourceId++;
 
+    log("compare");
     Fl::handle_(KBR_START_COMPARE, 0);
     
     // compare FileData pairs [ThreadComparePFiles]
     // creates a pairlist
     CompareFiles();
 
+    log("sort");
     Fl::handle_(KBR_START_SORT, 0);
    
     // viewing pairlist may be filtered [no matching sources]
     FilterAndSort(filterSame);
 
+    log ("done");
     Fl::handle_(KBR_DONE_LOAD, 0);
     
     return NULL;

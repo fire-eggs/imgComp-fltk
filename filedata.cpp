@@ -6,6 +6,7 @@
 #include <unistd.h> // access
 
 #include <stdarg.h> // va_start for log
+#include <chrono>   // timestamp for log
 
 FileSet _data;
 std::vector<Pair*>* _pairlist;
@@ -22,14 +23,38 @@ void initlog()
     strcat(_logpath, "/imgcomp.log");   
 }
 
+std::string getCurrentTimestamp()
+{
+    //using std::chrono::system_clock;
+    auto currentTime = std::chrono::system_clock::now();
+    char buffer[80];
+    char buffer2[80];
+    
+    auto transformed = currentTime.time_since_epoch().count() / 1000000;
+
+    short millis = transformed % 1000;
+
+//    std::time_t tt;
+    auto tt = std::chrono::system_clock::to_time_t ( currentTime );
+    auto timeinfo = localtime (&tt);
+    strftime (buffer,80,"%F %H:%M:%S",timeinfo);
+    snprintf(buffer2, 80, "%s.%03d",buffer,(unsigned int)millis);
+
+    return std::string(buffer2);
+}
+
 void log(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
     char buff[1024];
     vsnprintf(buff, 1024, fmt, ap);
+
+    std::string ts = getCurrentTimestamp();
     
     FILE *logf = fopen(_logpath, "a");
+    fputs(ts.c_str(), logf);
+    fputs(" | ", logf);
     fputs(buff, logf);
     fputc('\n', logf);
     fclose(logf);
