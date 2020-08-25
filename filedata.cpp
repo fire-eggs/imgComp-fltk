@@ -1,9 +1,21 @@
 #include "filedata.h"
 #include <FL/Fl.H> // fl_fopen
 #include <FL/fl_ask.H> // fl_alert
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <algorithm>
+
+#ifdef _WIN32
+#include "stdlib.h"
+//#define sleep _sleep
+#include <direct.h> // _getcwd
+#define getcwd _getcwd
+#define MAXNAMLEN 512
+#include <io.h> // access
+#define access _access
+#define F_OK 0
+#else
 #include <unistd.h> // access
+#endif
 
 #include <stdarg.h> // va_start for log
 #include <chrono>   // timestamp for log
@@ -18,6 +30,7 @@ char _logpath[MAXNAMLEN * 2];
 
 void initlog()
 {
+    // TODO is there a FLTK function???
     // set up the log file
     auto res = getcwd(_logpath, sizeof(_logpath));
     strcat(_logpath, "/imgcomp.log");   
@@ -107,6 +120,8 @@ void readPhash(char* filename, int sourceId)
         FileData* fd = new FileData();
         fd->Name = new std::string(parts);
         
+        // TODO assuming the .phashc files are in Windows format
+#ifndef _WIN32
         size_t dex = fd->Name->find("g:\\");
         if (dex != std::string::npos)
         {
@@ -124,7 +139,8 @@ void readPhash(char* filename, int sourceId)
                 fd->Name->erase(remove(fd->Name->begin(), fd->Name->end(), '\r'), fd->Name->end());
             }
         }
-        
+#endif
+
         fd->CRC = crc;
         fd->PHash = phash;
         fd->Source = sourceId;
@@ -336,6 +352,7 @@ bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
 //         printf("MoveFile: outpath: %s\n", buff);       
         
         log("MoveFile: attempt to rename %s to %s", srcpath, buff);
+// TODO is there a FLTK function???
         if (access(buff, F_OK) != -1)
             log("MoveFile: target file already exists");
         else

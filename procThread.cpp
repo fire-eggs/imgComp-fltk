@@ -54,6 +54,9 @@ Fl_Thread proc_thread;
 void fire_proc_thread()
 {
     fl_create_thread(proc_thread, proc_func, NULL);
+// TODO need a windows version of this!
+#ifndef _WIN32
     pthread_detach(*(pthread_t*)proc_thread);
+#endif
 }
 

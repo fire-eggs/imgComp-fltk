@@ -10,7 +10,10 @@
 #include "ViewWin.h"
 #include "prefs.h"
 
+#ifdef _WIN32
+#else
 #include <unistd.h> // getcwd
+#endif
 
 #include "events.h"
 
