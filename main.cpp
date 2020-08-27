@@ -274,6 +274,8 @@ void btnDiff(bool left, bool stretch)
     if (!p)
         return;
     showDiff(p, stretch);
+
+    _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
 }
 
 void btnDiff_cb(Fl_Widget *, void *)
