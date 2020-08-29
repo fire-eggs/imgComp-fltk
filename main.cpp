@@ -268,6 +268,26 @@ void btnViewR_cb(Fl_Widget* w, void* d)
     btnView(false);
 }
 
+void btnDiff(bool left, bool stretch)
+{
+    Pair* p = GetCurrentPair();
+    if (!p)
+        return;
+    showDiff(p, stretch);
+
+    _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
+}
+
+void btnDiff_cb(Fl_Widget *, void *)
+{
+    btnDiff(true, false);
+}
+
+void btnDiffS_cb(Fl_Widget*, void*)
+{
+    btnDiff(true, true);
+}
+
 void clear_controls()
 {
     // used on load, Clear menu
@@ -433,10 +453,12 @@ int main(int argc, char** argv)
     
     _btnDiff = new Fl_Button(115, BTNBOXY + 3, 50, BTN_HIGH);
     _btnDiff->label("Diff");
+    _btnDiff->callback(btnDiff_cb);
     
     Fl_Button *btnDiffS = new Fl_Button(170, BTNBOXY + 3, 100, BTN_HIGH);
     btnDiffS->label("Diff - Stretch");
-    
+    btnDiffS->callback(btnDiffS_cb);
+
     _btnRDup = new Fl_Button(275, BTNBOXY + 3, 50, BTN_HIGH);
     _btnRDup->label("Dup");
     _btnRDup->callback(btnDupR_cb);
