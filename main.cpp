@@ -323,9 +323,11 @@ void filter_cb(Fl_Widget* w, void* d)
 {
     filterSame = !filterSame;
 
-    // clear_controls();
-    // get a filtered view list
-    // update the browser
+    clear_controls();
+    FilterAndSort(filterSame);
+    load_listbox();
+    _listbox->select(1);
+    onListClick(0, 0);
 }
 
 void lockL_cb(Fl_Widget* w, void* d)
