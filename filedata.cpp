@@ -20,6 +20,9 @@
 #include <stdarg.h> // va_start for log
 #include <chrono>   // timestamp for log
 
+#include <omp.h>
+#include <mutex>
+
 FileSet _data;
 std::vector<Pair*>* _pairlist;
 std::vector<Pair*>* _viewlist;
@@ -193,10 +196,13 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
 // Throw out any pair where delta exceeds 5
 static int THRESHOLD = 11; // Hamming distance always a multiple of two
 
+std::mutex _pair_lock;
+
 void CompareOneFile(int me)
 {
     FileData* my = _data.Get(me);
     size_t count = _data.Count();
+#pragma omp parallel for
     for (int j = me + 1; j < count; j++)
     {
         FileData* they = _data.Get(j);
@@ -210,6 +216,8 @@ void CompareOneFile(int me)
             p->CRCMatch = (my->CRC == they->CRC) &&
                            my->CRC != 0 &&
                            they->CRC != 0;
+
+            std::lock_guard<std::mutex> guard(_pair_lock);
             _pairlist->push_back(p);
         }
     }

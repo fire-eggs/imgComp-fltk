@@ -106,10 +106,23 @@
     <ClCompile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;WIN32;ANIMGIF</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>E:\FLTK14\build3\lib\debug;E:\fltk0\libwebp\output\release-static\x64\lib;E:\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>fltkd.lib;fltk_imagesd.lib;fltk_pngd.lib;fltk_zd.lib;libwebp.lib;libwebpdemux.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;comctl32.lib;Ws2_32.lib;jpeg-static.lib</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;ANIMGIF</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\FLTK14\build3;E:\FLTK14\;E:\fltk0\libwebp;E:\fltk0\libwebp\src;</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>E:\FLTK14\build3\lib\MinSizeRel;E:\fltk0\libwebp\output\release-static\x64\lib;E:\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltk.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;libwebp.lib;libwebpdemux.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;comctl32.lib;Ws2_32.lib;jpeg-static.lib</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
