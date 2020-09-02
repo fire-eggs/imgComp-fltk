@@ -125,12 +125,18 @@ void readPhash(char* filename, int sourceId)
         
         // TODO assuming the .phashc files are in Windows format
 #ifndef _WIN32
+        // None of this magic is necessary if a symbolic link is created in the
+        // program's working folder:
+        //
+        // ln -s '/run/user/1000/gvfs/smb-share:domain=troll,server=troll,share=g,user=kevin' g:
+        //
+        // NOTE the case must match that used in the .phashc file
+        //
+#ifdef TEST        
         size_t dex = fd->Name->find("g:\\");
         if (dex != std::string::npos)
         {
             fd->Name->replace(dex,3, gMount);
-            replaceStrChar(fd->Name, "\\", '/');
-            fd->Name->erase(remove(fd->Name->begin(), fd->Name->end(), '\r'), fd->Name->end());
         }
         else
         {
@@ -138,10 +144,12 @@ void readPhash(char* filename, int sourceId)
             if (dex != std::string::npos)
             {
                 fd->Name->replace(dex,3, yMount);
-                replaceStrChar(fd->Name, "\\", '/');
-                fd->Name->erase(remove(fd->Name->begin(), fd->Name->end(), '\r'), fd->Name->end());
             }
         }
+#endif
+        // translate any windows paths to unix [slashes and trailing carriage-return
+        replaceStrChar(fd->Name, "\\", '/');
+        fd->Name->erase(remove(fd->Name->begin(), fd->Name->end(), '\r'), fd->Name->end());
 #endif
 
         fd->CRC = crc;
