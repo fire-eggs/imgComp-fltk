@@ -97,11 +97,6 @@ void initShow()
 
 void makeWin()
 {
-    //int x = 100;
-    //int y = 100;
-    //int w = 1024;
-    //int h = 768;
-
     int x, y, w, h;
     _PREFS->getWinRect("View", x, y, w, h);
 
@@ -183,21 +178,8 @@ void showView(Fl_RGB_Image *img)
 
 Fl_RGB_Image* _diffImage;
 
-bool diff(Pair *toview, bool stretch)
+bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
 {
-    if (stretch)
-        return false; // punt on resizing for now
-
-    // 1. get the two images
-    const char *pathL = GetFD(toview->FileLeftDex)->Name->c_str();
-    const char *pathR = GetFD(toview->FileRightDex)->Name->c_str();
-
-    Fl_Shared_Image* imgL = Fl_Shared_Image::get(pathL);
-    Fl_Shared_Image* imgR = Fl_Shared_Image::get(pathR);
-
-    if (imgL->d() != 3 || imgR->d() != 3)
-        return false; // punt on other depths for now
-
     // 2. get the image pixel data [assuming Fl_RGB_Image for now]
     const char* const* dataL0 = imgL->data();
     const char* const* dataR0 = imgR->data();
@@ -211,7 +193,7 @@ bool diff(Pair *toview, bool stretch)
 
     // 3. create the output pixel buffer
     auto size = h * w * 3;
-    unsigned char* outbuf = (unsigned char *)malloc(size); // NOTE: *cannot* use 'new' here
+    unsigned char* outbuf = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
 
     // 4. loop x,y thru two images, write diff to output
     for (int y = 0; y < h; y++)
@@ -219,9 +201,9 @@ bool diff(Pair *toview, bool stretch)
         unsigned long offset = y * w * d; // TODO actual image W
         for (int x = 0; x < w; x++)
         {
-            const unsigned char p1L = dataL[offset+0];
-            const unsigned char p2L = dataL[offset+1];
-            const unsigned char p3L = dataL[offset+2];
+            const unsigned char p1L = dataL[offset + 0];
+            const unsigned char p2L = dataL[offset + 1];
+            const unsigned char p3L = dataL[offset + 2];
 
             const unsigned char p1R = dataR[offset + 0];
             const unsigned char p2R = dataR[offset + 1];
@@ -249,6 +231,33 @@ bool diff(Pair *toview, bool stretch)
 
     _diffImage = new Fl_RGB_Image(outbuf, w, h, 3);
     return true;
+}
+
+bool diff(Pair* toview, bool stretch)
+{
+    // 1. get the two images
+    const char* pathL = GetFD(toview->FileLeftDex)->Name->c_str();
+    const char* pathR = GetFD(toview->FileRightDex)->Name->c_str();
+
+    Fl_Shared_Image* imgL = Fl_Shared_Image::get(pathL);
+    Fl_Shared_Image* imgR = Fl_Shared_Image::get(pathR);
+
+    if (imgL->d() != 3 || imgR->d() != 3)
+        return false; // punt on other depths for now
+
+    // Deal with stretch
+    if (!stretch)
+        return doDiff(imgL, imgR);
+
+    int newH = imgL->h();
+    if (imgR->h() > newH)
+        newH = imgR->h();
+    int newW = imgL->w();
+    if (imgR->w() > newW)
+        newW = imgR->w();
+    Fl_Shared_Image* newImageL = (Fl_Shared_Image *)imgL->copy(newW, newH);
+    Fl_Shared_Image* newImageR = (Fl_Shared_Image *)imgR->copy(newW, newH);
+    return doDiff(newImageL, newImageR);
 }
 
 void showDiff(Pair* toview, bool stretch)
