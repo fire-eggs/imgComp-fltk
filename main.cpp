@@ -395,15 +395,15 @@ int handleSpecial(int event)
     {       
         case KBR_START_LOAD:
             _window->label("Loading...");
-            Fl::flush();
+            Fl::awake();
             break;
         case KBR_START_COMPARE:
             _window->label("Diffing...");
-            Fl::flush();
+            Fl::awake();
             break;
         case KBR_START_SORT:
             _window->label("Sorting...");
-            Fl::flush();
+            Fl::awake();
             break;
         case KBR_DONE_LOAD:
             _window->label("Ready!");
@@ -411,6 +411,7 @@ int handleSpecial(int event)
             // do NOT flush here!
             _listbox->select(1);
             onListClick(0,0);
+            Fl::awake();
             break;
             
         default:
