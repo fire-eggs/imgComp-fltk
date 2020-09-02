@@ -158,6 +158,10 @@ void onListClick(Fl_Widget* w, void* d)
         line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
         
     int data = (intptr_t)_listbox->data(line);
+    size_t max = GetPairCount();
+    if (data >= max)
+        return;
+
 //    printf("LB: val: %d data:%d\n", line, data);
 
     Pair* p = GetPair(data);
