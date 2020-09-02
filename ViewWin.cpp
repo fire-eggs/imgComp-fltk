@@ -3,6 +3,7 @@
 
 #include "ViewWin.h"
 #include "Fl_Image_Display.H"
+#include "prefs.h"
 
 Fl_Double_Window* _win;
 Fl_Image_Display* _disp;
@@ -10,6 +11,23 @@ Pair* _viewing;
 Fl_RGB_Image* _view;
 bool _showLeft;
 Fl_Button* _bFull; // the 'Fit'/'100%' button
+
+extern Prefs* _PREFS;
+
+class ViewWin : public Fl_Double_Window
+{
+public:
+    ViewWin(int x, int y, int w, int h) : Fl_Double_Window(x, y, w, h)
+    {}
+
+    void resize(int, int, int, int) override;
+};
+
+void ViewWin::resize(int x, int y, int w, int h)
+{
+    Fl_Double_Window::resize(x, y, w, h);
+    _PREFS->setWinRect("View", x, y, w, h);
+}
 
 void ViewImage()
 {
@@ -79,12 +97,15 @@ void initShow()
 
 void makeWin()
 {
-    int x = 100;
-    int y = 100;
-    int w = 1024;
-    int h = 768;
+    //int x = 100;
+    //int y = 100;
+    //int w = 1024;
+    //int h = 768;
 
-    _win = new Fl_Double_Window(x, y, w, h);
+    int x, y, w, h;
+    _PREFS->getWinRect("View", x, y, w, h);
+
+    _win = new ViewWin(x, y, w, h);
 
     _win->begin();
     _disp = new Fl_Image_Display(0, 0, w, h-27);
