@@ -232,7 +232,7 @@ void load_listbox()
     if (count < 1)
     {
         _listbox->add("No candidates found", NULL);
-        printf("Empty list\n");
+//        printf("Empty list\n");
     }
 
     for (int i = 0; i < count; i++)
@@ -463,6 +463,8 @@ void clear_cb(Fl_Widget* w, void* d)
     clear_controls();
     ClearPairList();
     ClearData();
+
+    _window->label("");
 }
 
 void filter_cb(Fl_Widget* w, void* d)
