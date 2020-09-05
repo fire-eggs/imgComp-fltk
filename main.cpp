@@ -9,6 +9,7 @@
 #include "filedata.h"
 #include "ViewWin.h"
 #include "prefs.h"
+#include "MostRecentPaths.h"
 
 #ifdef _WIN32
 #else
@@ -16,6 +17,15 @@
 #endif
 
 #include "events.h"
+
+void load_cb(Fl_Widget*, void*);
+void quit_cb(Fl_Widget*, void*);
+void clear_cb(Fl_Widget*, void*);
+void filter_cb(Fl_Widget*, void*);
+void lockL_cb(Fl_Widget*, void*);
+void lockR_cb(Fl_Widget*, void*);
+void viewLog_cb(Fl_Widget*, void*);
+void clear_controls();
 
 Prefs* _PREFS;
 
@@ -29,6 +39,9 @@ Fl_Group* _btnBox;
 Fl_Button* _btnLDup;
 Fl_Button* _btnRDup;
 Fl_Button* _btnDiff;
+MostRecentPaths* _mrp;
+Fl_Menu_Bar* _menu;
+
 char *loadfile; // hacky
 
 extern char *_logpath; // hacky
@@ -45,7 +58,7 @@ public:
 
     void resize(int, int, int, int) override;
     int handle(int event) override;
-
+    void do_menu();
 };
 
 MainWin* _window;
@@ -79,6 +92,125 @@ int MainWin::handle(int event)
     // TODO double-click on img boxes?
     return Fl_Double_Window::handle(event);
 }
+
+enum
+{
+    MI_FILE,
+    MI_LOAD,
+    MI_CLEAR,
+    MI_EXIT,
+
+    MI_FAVS, // Must be last before MI_FAVx
+    MI_FAV0,
+    MI_FAV1,
+    MI_FAV2,
+    MI_FAV3,
+    MI_FAV4,
+    MI_FAV5,
+    MI_FAV6,
+    MI_FAV7,
+    MI_FAV8,
+    MI_FAV9,
+};
+
+static void MenuCB(Fl_Widget* window_p, void *userdata)
+{
+    long choice = (long)userdata;
+    switch (choice)
+    {
+    case MI_LOAD:
+        load_cb(NULL, NULL);
+        break;
+
+    case MI_CLEAR:
+        clear_cb(NULL, NULL);
+        break;
+
+    case MI_EXIT:
+        quit_cb(NULL, NULL);
+        break;
+
+    case MI_FAV0:
+    case MI_FAV1:
+    case MI_FAV2:
+    case MI_FAV3:
+    case MI_FAV4:
+    case MI_FAV5:
+    case MI_FAV6:
+    case MI_FAV7:
+    case MI_FAV8:
+    case MI_FAV9:
+        {
+            int path = choice - MI_FAV0;
+            char** favs = _mrp->getAll();
+            loadfile = favs[path];
+
+            clear_controls();
+            Fl::flush();
+
+            fire_proc_thread();
+
+        }
+        break;
+    }
+}
+
+Fl_Menu_Item mainmenuItems[] =
+{
+    {"&File", 0, 0, 0, FL_SUBMENU},
+    {"&Load...", 0, load_cb},
+    {"&Clear", 0, clear_cb},
+    {"Last Used", 0, 0, 0, FL_SUBMENU},
+    {0},
+    {"E&xit", 0, quit_cb},
+    {0},
+
+    {"&Options", 0, 0, 0, FL_SUBMENU},
+    {"Fi&lter Same Phash", 0, filter_cb, 0, FL_MENU_TOGGLE},
+    {"Lock Left Dup Button", 0, lockL_cb, 0, FL_MENU_TOGGLE},
+    {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE},
+    {"View log file ...", 0, viewLog_cb, 0},
+    {0},
+
+    {0}
+};
+
+void MainWin::do_menu()
+{
+    // 1. find the submenu in the "master" menu
+    int i = _menu->find_index("&File/Last Used");
+    if (i < 0)
+        return;
+    _menu->clear_submenu(i);
+
+    size_t numfavs = _mrp->getCount();
+
+    Fl_Menu_Item* mi = (Fl_Menu_Item *)_menu->find_item("&File/Last Used");
+    if (!numfavs)
+    {
+        mi->deactivate();
+        return;
+    }
+
+    mi->activate();
+    char** favs = _mrp->getAll();
+    char s[1000];
+    for (int j = 0; j < numfavs; j++)
+    {
+        sprintf(s, "&File/Last Used/%d", j);
+        int newdex = _menu->add((const char *)s, (const char *)NULL, MenuCB, 0);
+        Fl_Menu_Item& item = (Fl_Menu_Item&)_menu->menu()[newdex];
+        //mi = (Fl_Menu_Item *)_menu->find_item(s);
+        item.label(favs[j]);
+        item.argument(MI_FAV0 + j);
+    }
+}
+
+void updateMRU()
+{
+    _window->do_menu();
+}
+
 
 Pair *GetCurrentPair()
 {
@@ -355,6 +487,10 @@ void load_cb(Fl_Widget* , void* )
     if (!loadfile)
         return;
 
+    _mrp->Add(loadfile); // add new path
+    _mrp->Save();
+    updateMRU(); // update the menu
+
     clear_controls();
     Fl::flush();
     
@@ -370,24 +506,6 @@ void viewLog_cb(Fl_Widget* , void* )
 {
     // TODO popup the log file
 }
-
-Fl_Menu_Item mainmenuItems[] =
-{
-    {"&File", 0, 0, 0, FL_SUBMENU},
-    {"&Load...", 0, load_cb},
-    {"&Clear", 0, clear_cb},
-    {"E&xit", 0, quit_cb},
-    {0},
-
-    {"&Options", 0, 0, 0, FL_SUBMENU},
-    {"Fi&lter Same Phash", 0, filter_cb, 0, FL_MENU_TOGGLE},
-    {"Lock Left Dup Button", 0, lockL_cb, 0, FL_MENU_TOGGLE},
-    {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE},
-    {"View log file ...", 0, viewLog_cb, 0},
-    {0},
-
-    {0}
-};
 
 int handleSpecial(int event)
 {
@@ -429,14 +547,17 @@ int main(int argc, char** argv)
     int x, y, w, h;
     _PREFS->getWinRect(MAIN_PREFIX, x, y, w, h);
     
+    _mrp = new MostRecentPaths(_PREFS->_prefs);
+
     filterSame = false;
 
     fl_register_images();
 
     MainWin window(x, y, w, h);
 
-    Fl_Menu_Bar* menu = new Fl_Menu_Bar(0, 0, window.w(), 25);
-    menu->copy(mainmenuItems);
+    _menu = new Fl_Menu_Bar(0, 0, window.w(), 25);
+    _menu->copy(mainmenuItems);
+    updateMRU();
 
     _listbox = new Fl_Hold_Browser(0, 25, window.w(), 250);
     _listbox->color(FL_BACKGROUND_COLOR, FL_GREEN);
