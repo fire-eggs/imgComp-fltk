@@ -237,7 +237,8 @@ void load_listbox()
 
     for (int i = 0; i < count; i++)
     {
-        _listbox->add(GetPairText(i), GetPairData(i));
+        if (GetPair(i)->valid)
+            _listbox->add(GetPairText(i), GetPairData(i));
     }
     _listbox->make_visible(1);
     _listbox->redraw();
@@ -310,6 +311,8 @@ void onListClick(Fl_Widget* w, void* d)
     // Force selection of next entry
     if (!imgL || !imgR)
     {
+        p->valid = false;
+
         // TODO do this w/o recursion!
         // TODO needs to be done in the viewlist ???
         if (imgL) imgL->release();
@@ -365,6 +368,7 @@ void btnDup(bool left)
     {
         int oldsel = _listbox->value();
         RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
+		p->valid = false;
         ReloadListbox();
         _listbox->select(oldsel);
         onListClick(0, 0); // force onclick       

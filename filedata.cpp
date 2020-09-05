@@ -224,6 +224,7 @@ void CompareOneFile(int me)
             p->CRCMatch = (my->CRC == they->CRC) &&
                            my->CRC != 0 &&
                            they->CRC != 0;
+            p->valid = true; // assume valid until otherwise
 
             std::lock_guard<std::mutex> guard(_pair_lock);
             _pairlist->push_back(p);

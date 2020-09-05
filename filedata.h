@@ -22,6 +22,7 @@ public:
     int Val;
     double FVal;     // TODO unused?
     bool CRCMatch;
+    bool valid;      // been removed/renamed at some point?
 
     int Compare(Pair other)
     {
