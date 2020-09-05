@@ -243,11 +243,20 @@ bool diff(Pair* toview, bool stretch)
     Fl_Shared_Image* imgR = Fl_Shared_Image::get(pathR);
 
     if (imgL->d() != 3 || imgR->d() != 3)
+    {
+        imgL->release();
+        imgR->release();
         return false; // punt on other depths for now
+    }
 
     // Deal with stretch
     if (!stretch)
-        return doDiff(imgL, imgR);
+    {
+        auto ret = doDiff(imgL, imgR);
+        imgL->release();
+        imgR->release();
+        return ret;
+    }
 
     int newH = imgL->h();
     if (imgR->h() > newH)
@@ -257,6 +266,8 @@ bool diff(Pair* toview, bool stretch)
         newW = imgR->w();
     Fl_Shared_Image* newImageL = (Fl_Shared_Image *)imgL->copy(newW, newH);
     Fl_Shared_Image* newImageR = (Fl_Shared_Image *)imgR->copy(newW, newH);
+    imgL->release();
+    imgR->release();
     return doDiff(newImageL, newImageR);
 }
 

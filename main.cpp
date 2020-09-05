@@ -366,6 +366,17 @@ void btnDup(bool left)
     // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
     if (MoveFile("%s/dup%d_%s", target, source))
     {
+        if (_leftImgView->image())
+        {
+            _leftImgView->image()->release();
+            _leftImgView->image(NULL);
+        }
+        if (_rightImgView->image())
+        {
+            _rightImgView->image()->release();
+            _rightImgView->image(NULL);
+        }
+
         int oldsel = _listbox->value();
         RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
 		p->valid = false;
@@ -433,11 +444,10 @@ void clear_controls()
     // used on load, Clear menu
     _listbox->clear();
 
-// TODO memory leak?
-//    if (_leftImgView->image())
-//        _leftImgView->image()->release();
-//    if (_rightImgView->image())
-//        _rightImgView->image()->release();
+    if (_leftImgView->image())
+        ((Fl_Shared_Image *)_leftImgView->image())->release();
+    if (_rightImgView->image())
+        ((Fl_Shared_Image*)_rightImgView->image())->release();
     
     _leftImgView->image(NULL);
     _rightImgView->image(NULL);
