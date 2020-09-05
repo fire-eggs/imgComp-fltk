@@ -336,22 +336,24 @@ void FilterAndSort(bool filter)
         _viewlist = new std::vector<Pair*>(*_pairlist);
 }
 
+#include <FL/filename.H>
+
 bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
 {
+    //printf("MoveFile: srcpath: %s\n", srcpath);
+    //printf("MoveFile: destpath: %s\n", destpath);
+
     // rename the source file to be a duplicate of the destination
     // i.e. <sourcebase>/<srcfile> to <sourcebase>/dup0_<destfile>
     
     // 1. determine the destination file name [not path!]
-    const char *destfname = strrchr(destpath, '/');
-    if (destfname) 
-        ++destfname;
-    else
-        return false; // TODO destination not a legal path+filename ?
+    const char* destfname = fl_filename_name(destpath);
         
     // 2. get the source "base" path [path up to the filename]        
     const char *srcbase = strrchr(srcpath, '/');
     if (!srcbase)
-        return false; // TODO source not a legal path+filename ?
+        srcbase = strrchr(srcpath, '\\');
+        //return false; // TODO source not a legal path+filename ?
         
     char spath[MAXNAMLEN];
     memset(spath, 0, MAXNAMLEN);
@@ -364,13 +366,10 @@ bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
     {
         sprintf(buff, nameForm, spath, i, destfname);
         
-//         printf("MoveFile: srcpath: %s\n", srcpath);
-//         printf("MoveFile: destpath: %s\n", destpath);
-//         printf("MoveFile: outpath: %s\n", buff);       
+        //printf("MoveFile: outpath: %s\n", buff);       
         
         log("MoveFile: attempt to rename %s to %s", srcpath, buff);
-// TODO is there a FLTK function???
-        if (access(buff, F_OK) != -1)
+        if (fl_access(buff, F_OK) != -1)
             log("MoveFile: target file already exists");
         else
         {
