@@ -12,6 +12,10 @@ Fl_RGB_Image* _view;
 bool _showLeft;
 Fl_Button* _bFull; // the 'Fit'/'100%' button
 bool zoomFit;
+bool diffMode;
+
+Fl_RGB_Image* _diffImageL;
+Fl_RGB_Image* _diffImageR;
 
 extern Prefs* _PREFS;
 
@@ -32,7 +36,7 @@ void ViewWin::resize(int x, int y, int w, int h)
 
 void ViewImage()
 {
-    if (_viewing)
+    if (!diffMode)
     {
         const char* path;
 
@@ -57,7 +61,19 @@ void ViewImage()
     }
     else
     {
-        _disp->value((Fl_Shared_Image *)_view);
+        auto scale = _disp->scale();
+        if (_showLeft)
+        {
+            _win->label("Diff: Left vs Right");
+            _disp->value((Fl_Shared_Image*)_diffImageL);
+        }
+        else
+        {
+            _win->label("Diff: Right vs Left");
+            _disp->value((Fl_Shared_Image*)_diffImageR);
+        }
+        _disp->scale(scale);
+        _disp->redraw(); // TODO why is this necessary? Is NOT if label changed
     }
 }
 
@@ -109,6 +125,7 @@ void makeWin()
     _disp = new Fl_Image_Display(0, 0, w, h-27);
 
     zoomFit = true; // start in 'fit' mode
+    _disp->_scrollbarsOn = false;
 
     // btnbar
     // swap, close, 100% / fit, zoom in, zoom out
@@ -158,9 +175,11 @@ void showView(Pair* toview, bool startLeft)
     if (!_win)
         makeWin();
 
+    diffMode = false;
     _viewing = toview;
     _view = NULL;
     _showLeft = startLeft;
+    _disp->scale(zoomFit ? 0.0 : 1.0);
 
     _win->show();
     ViewImage(); // NOTE: title bar doesn't update until shown
@@ -169,11 +188,12 @@ void showView(Pair* toview, bool startLeft)
         Fl::wait();
 }
 
-void showView(Fl_RGB_Image *img)
+void showView()
 {
     if (!_win)
         makeWin();
-    _view = img;
+    _disp->scale(zoomFit ? 0.0 : 1.0);
+    _view = _diffImageL;
     _viewing = NULL;
     _win->show();
     ViewImage(); // NOTE: title bar doesn't update until shown
@@ -181,7 +201,23 @@ void showView(Fl_RGB_Image *img)
         Fl::wait();
 }
 
-Fl_RGB_Image* _diffImage;
+void setOutPixel(unsigned char* outbuf, unsigned long offset, int diff, 
+    const unsigned char p1, const unsigned char p2, const unsigned char p3)
+{
+    if (diff < 10)
+    {
+        // set black
+        *(outbuf + offset + 0) = 0;
+        *(outbuf + offset + 1) = 0;
+        *(outbuf + offset + 2) = 0;
+    }
+    else
+    {
+        *(outbuf + offset + 0) = p1;
+        *(outbuf + offset + 1) = p2;
+        *(outbuf + offset + 2) = p3;
+    }
+}
 
 bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
 {
@@ -198,7 +234,8 @@ bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
 
     // 3. create the output pixel buffer
     auto size = h * w * 3;
-    unsigned char* outbuf = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
+    unsigned char* outbufL = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
+    unsigned char* outbufR = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
 
     // 4. loop x,y thru two images, write diff to output
     for (int y = 0; y < h; y++)
@@ -216,25 +253,16 @@ bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
 
             int diff = abs(p1L - p1R + p2L - p2R + p3L - p3R);
 
-            if (diff < 10)
-            {
-                // set black
-                *(outbuf + offset + 0) = 0;
-                *(outbuf + offset + 1) = 0;
-                *(outbuf + offset + 2) = 0;
-            }
-            else
-            {
-                *(outbuf + offset + 0) = p1L;
-                *(outbuf + offset + 1) = p2L;
-                *(outbuf + offset + 2) = p3L;
-            }
+            setOutPixel(outbufL, offset, diff, p1L, p2L, p3L);
+            setOutPixel(outbufR, offset, diff, p1R, p2R, p3R);
 
             offset += d; // move to next pixel
         }
     }
 
-    _diffImage = new Fl_RGB_Image(outbuf, w, h, 3);
+    _diffImageL = new Fl_RGB_Image(outbufL, w, h, 3);
+    _diffImageR = new Fl_RGB_Image(outbufR, w, h, 3);
+
     return true;
 }
 
@@ -280,6 +308,8 @@ void showDiff(Pair* toview, bool stretch)
 {
     if (!diff(toview, stretch))
         return;
-    showView(_diffImage);
-    _diffImage->release();
+    diffMode = true;
+    showView();
+    _diffImageL->release();
+    _diffImageR->release();
 }

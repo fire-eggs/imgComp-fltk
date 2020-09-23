@@ -335,11 +335,11 @@ void onListClick(Fl_Widget* w, void* d)
     int iw = _leftImgView->w();
     int ih = _leftImgView->h();
 
-    // TODO memory leak?
-//     if (_leftImgView->image())
-//         _leftImgView->image()->release();
-//     if (_rightImgView->image())
-//         _rightImgView->image()->release();
+     if (_leftImgView->image())
+         _leftImgView->image()->release();
+     if (_rightImgView->image())
+         _rightImgView->image()->release();
+
     _leftImgView->image(imgL->copy(iw, ih));
     _rightImgView->image(imgR->copy(iw,ih));
 

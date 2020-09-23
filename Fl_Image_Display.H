@@ -72,8 +72,9 @@ class FL_EXPORT Fl_Image_Display : public Fl_Group
   void		update_scrollbars();
   void drawcheckerboard(int, int, int, int);
 
-  bool   _scrollbarsOn;
-  bool   _drawChecker;
+  public:
+      bool   _scrollbarsOn;
+      bool   _drawChecker;
 
   protected:
 
