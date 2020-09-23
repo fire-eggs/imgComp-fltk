@@ -11,6 +11,7 @@ Pair* _viewing;
 Fl_RGB_Image* _view;
 bool _showLeft;
 Fl_Button* _bFull; // the 'Fit'/'100%' button
+bool zoomFit;
 
 extern Prefs* _PREFS;
 
@@ -42,7 +43,9 @@ void ViewImage()
 
         Fl_Shared_Image* img = Fl_Shared_Image::get(path);
 
+        auto scale = _disp->scale();
         _disp->value(img);
+        _disp->scale(scale);
 
         char buff[1024];
         if (_showLeft)
@@ -67,9 +70,9 @@ void bSwapClick(Fl_Widget *, void *d)
 void bFullClick(Fl_Widget *, void *d)
 {
     // alternate between "100%" and "Fit"
-    bool full = _bFull->label()[0] == '1';
-    _bFull->label( full ? "Fit" : "100%" );
-    if (full)
+    zoomFit = !zoomFit;
+    _bFull->label( zoomFit ? "100%" : "Fit" );
+    if (!zoomFit)
         _disp->scale(1.0);
     else
         _disp->scale(0);
@@ -104,6 +107,8 @@ void makeWin()
 
     _win->begin();
     _disp = new Fl_Image_Display(0, 0, w, h-27);
+
+    zoomFit = true; // start in 'fit' mode
 
     // btnbar
     // swap, close, 100% / fit, zoom in, zoom out
