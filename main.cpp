@@ -617,6 +617,12 @@ int main(int argc, char** argv)
     btnRView->label("View");
     btnRView->callback(btnViewR_cb);
 
+    // An invisible widget to be resizable instead of anything else
+    // in the toolbar. NOTE: *must* be the last in the X list
+    Fl_Box* invisible = new Fl_Box(400, BTNBOXY + 3, 10, BTN_HIGH);
+    invisible->hide();
+    Fl_Group::current()->resizable(invisible);
+
     _btnBox->end();
 
     _leftImgView = new Fl_Box(0, BTNBOXY + BTN_BOX_HIGH, window.w() / 2, 250);
