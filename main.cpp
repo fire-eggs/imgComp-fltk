@@ -113,6 +113,8 @@ enum
     MI_FAV9,
 };
 
+void updateMRU();
+
 static void MenuCB(Fl_Widget* window_p, void *userdata)
 {
     long choice = (long)userdata;
@@ -144,6 +146,10 @@ static void MenuCB(Fl_Widget* window_p, void *userdata)
             int path = choice - MI_FAV0;
             char** favs = _mrp->getAll();
             loadfile = favs[path];
+
+            _mrp->Add(loadfile); // add "new" path
+            _mrp->Save();
+            updateMRU(); // update the menu
 
             clear_controls();
             Fl::flush();
