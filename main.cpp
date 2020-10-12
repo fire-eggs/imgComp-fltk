@@ -352,7 +352,8 @@ void onListClick(Fl_Widget* w, void* d)
     _leftImgView->redraw();
     _rightImgView->redraw();
     
-    // TODO ensure the current line is up a little bit - can't click to get to next line sometimes
+    // ensure the current line is up a little bit - can't click to get to next line sometimes
+    _listbox->bottomline(line + 5);
 }
 
 void btnDup(bool left)
