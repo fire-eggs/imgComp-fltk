@@ -25,6 +25,7 @@ void filter_cb(Fl_Widget*, void*);
 void lockL_cb(Fl_Widget*, void*);
 void lockR_cb(Fl_Widget*, void*);
 void viewLog_cb(Fl_Widget*, void*);
+void copyToClip_cb(Fl_Widget*, void*);
 void clear_controls();
 
 Prefs* _PREFS;
@@ -176,6 +177,7 @@ Fl_Menu_Item mainmenuItems[] =
     {"Lock Left Dup Button", 0, lockL_cb, 0, FL_MENU_TOGGLE},
     {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE},
     {"View log file ...", 0, viewLog_cb, 0},
+    {"Copy filenames to clipboard", 0, copyToClip_cb, 0},
     {0},
 
     {0}
@@ -216,7 +218,6 @@ void updateMRU()
 {
     _window->do_menu();
 }
-
 
 Pair *GetCurrentPair()
 {
@@ -527,6 +528,22 @@ void quit_cb(Fl_Widget* , void* )
 void viewLog_cb(Fl_Widget* , void* )
 {
     // TODO popup the log file
+}
+
+void copyToClip_cb(Fl_Widget*, void*)
+{
+    Pair* p = GetCurrentPair();
+    if (!p)
+        return;
+
+    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+
+    int size = strlen(pathL) + strlen(pathR) + 3;
+    char* buff = (char *)malloc(size);
+    sprintf(buff, "%s\n%s", pathL, pathR);
+    Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
+    free(buff);
 }
 
 int handleSpecial(int event)
