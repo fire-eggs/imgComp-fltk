@@ -992,8 +992,12 @@ Fl_Image_Display::value(Fl_Shared_Image* v)
 
 void Fl_Image_Display::zoomDelta(int direction)
 {
-	if (!value_ || value_->num_images() < 1)
-		return; 
+	// TODO why would no shared images be a problem? [viewing non-shared-image]
+	//if (!value_ || value_->num_images() < 1)
+	//	return; 
+
+	if (!value_)
+		return;
 
 	if (direction > 0)
 	{
