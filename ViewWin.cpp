@@ -235,7 +235,7 @@ bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
     int d = imgL->d();
 
     // 3. create the output pixel buffer
-    auto size = h * w * 3;
+    auto size = h * w * d;
     unsigned char* outbufL = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
     unsigned char* outbufR = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
 
@@ -262,8 +262,8 @@ bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
         }
     }
 
-    _diffImageL = new Fl_RGB_Image(outbufL, w, h, 3);
-    _diffImageR = new Fl_RGB_Image(outbufR, w, h, 3);
+    _diffImageL = new Fl_RGB_Image(outbufL, w, h, d);
+    _diffImageR = new Fl_RGB_Image(outbufR, w, h, d);
 
     return true;
 }
@@ -284,7 +284,7 @@ bool diff(Pair* toview, bool stretch)
         return false;
     }
 
-    if (imgL->d() != 3 || imgR->d() != 3)
+    if (imgL->d() != imgR->d())
     {
         imgL->release();
         imgR->release();
