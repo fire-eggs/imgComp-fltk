@@ -46,6 +46,8 @@ void ViewImage()
             path = GetFD(_viewing->FileRightDex)->Name->c_str();
 
         Fl_Shared_Image* img = Fl_Shared_Image::get(path);
+        if (!img)
+            return;
 
         auto scale = _disp->scale();
         _disp->value(img);
@@ -273,7 +275,14 @@ bool diff(Pair* toview, bool stretch)
     const char* pathR = GetFD(toview->FileRightDex)->Name->c_str();
 
     Fl_Shared_Image* imgL = Fl_Shared_Image::get(pathL);
+    if (!imgL)
+        return false;
     Fl_Shared_Image* imgR = Fl_Shared_Image::get(pathR);
+    if (!imgR)
+    {
+        imgL->release();
+        return false;
+    }
 
     if (imgL->d() != 3 || imgR->d() != 3)
     {
