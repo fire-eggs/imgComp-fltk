@@ -458,6 +458,31 @@ void btnDiffS_cb(Fl_Widget*, void*)
     btnDiff(true, true);
 }
 
+void btnNext_cb(Fl_Widget*, void*)
+{
+    if (_listbox->size() < 1) // list is now empty, done
+        return;
+
+    int line = _listbox->value();
+    if (!line)
+        line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
+    _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
+    onListClick(0, 0);
+}
+
+void btnPrev_cb(Fl_Widget*, void*)
+{
+    if (_listbox->size() < 1) // list is now empty, done
+        return;
+
+    int line = _listbox->value();
+    if (!line)
+        line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
+    _listbox->select(line - 1, 1); // NOTE: does NOT force 'onclick' event
+    onListClick(0, 0);
+
+}
+
 void clear_controls()
 {
     // used on load, Clear menu
@@ -628,33 +653,49 @@ int main(int argc, char** argv)
     _btnBox = new Fl_Group(0, BTNBOXY, window.w(), BTN_BOX_HIGH);
     _btnBox->begin();
 
+    int btnX = 5;
     _btnLDup = new Fl_Button(5, BTNBOXY+3, 50, BTN_HIGH);
     _btnLDup->label("Dup");
     _btnLDup->callback(btnDupL_cb);
     
-    Fl_Button *btnLView = new Fl_Button(60, BTNBOXY + 3, 50, BTN_HIGH);
+    btnX += 55;
+    Fl_Button *btnLView = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     btnLView->label("View");
     btnLView->callback(btnViewL_cb);
-    
-    _btnDiff = new Fl_Button(115, BTNBOXY + 3, 50, BTN_HIGH);
+
+    btnX += 55 + 10;
+    _btnDiff = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     _btnDiff->label("Diff");
     _btnDiff->callback(btnDiff_cb);
-    
-    Fl_Button *btnDiffS = new Fl_Button(170, BTNBOXY + 3, 100, BTN_HIGH);
+
+    btnX += 55;
+    Fl_Button *btnDiffS = new Fl_Button(btnX, BTNBOXY + 3, 100, BTN_HIGH);
     btnDiffS->label("Diff - Stretch");
     btnDiffS->callback(btnDiffS_cb);
 
-    _btnRDup = new Fl_Button(275, BTNBOXY + 3, 50, BTN_HIGH);
+    btnX += 105 + 10;
+    _btnRDup = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     _btnRDup->label("Dup");
     _btnRDup->callback(btnDupR_cb);
-    
-    Fl_Button* btnRView = new Fl_Button(330, BTNBOXY + 3, 50, BTN_HIGH);
+
+    btnX += 55;
+    Fl_Button* btnRView = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     btnRView->label("View");
     btnRView->callback(btnViewR_cb);
 
+    btnX += 55 + 10;
+    Fl_Button* btnPrev = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
+    btnPrev->label("Prev");
+    btnPrev->callback(btnPrev_cb);
+    btnX += 55;
+    Fl_Button* btnNext = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
+    btnNext->label("Next");
+    btnNext->callback(btnNext_cb);
+
+    btnX += 60;
     // An invisible widget to be resizable instead of anything else
     // in the toolbar. NOTE: *must* be the last in the X list
-    Fl_Box* invisible = new Fl_Box(400, BTNBOXY + 3, 10, BTN_HIGH);
+    Fl_Box* invisible = new Fl_Box(btnX, BTNBOXY + 3, 10, BTN_HIGH);
     invisible->hide();
     Fl_Group::current()->resizable(invisible);
 
