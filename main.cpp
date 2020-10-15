@@ -27,6 +27,8 @@ void lockR_cb(Fl_Widget*, void*);
 void viewLog_cb(Fl_Widget*, void*);
 void copyToClip_cb(Fl_Widget*, void*);
 void clear_controls();
+void updateBoxImages();
+void onListClick(Fl_Widget* w, void* d);
 
 Prefs* _PREFS;
 
@@ -47,7 +49,10 @@ char *loadfile; // hacky
 
 extern char *_logpath; // hacky
 
-int widths[] = {40, 340, 340, 0};
+Fl_Shared_Image* _leftImage;
+Fl_Shared_Image* _rightImage;
+
+int widths[] = {50, 340, 340, 0};
 
 // NOTE: relying on toggle menus auto initialized to OFF
 
@@ -70,18 +75,23 @@ MainWin* _window;
 
 void MainWin::resize(int x, int y, int w, int h)
 {
+    int oldw = this->w();
+    int oldh = this->h();
     Fl_Double_Window::resize(x, y, w, h);
+    if (w == oldw && h == oldh)
+        return; // merely moving window
 
     // size children as desired
     int newhigh = (int)(h * 0.4 - BTN_BOX_HALFHIGH);
     _listbox->resize(_listbox->x(), _listbox->y(), w, newhigh);
     int newy = _listbox->y() + newhigh + BTN_BOX_HIGH;
     _btnBox->resize(0, newy - BTN_BOX_HIGH, w, BTN_BOX_HIGH);
-    newhigh = (int)(h * 0.6 - BTN_BOX_HALFHIGH);
+    newhigh = h - newy; // (int)(h * 0.6 - BTN_BOX_HALFHIGH);
     _leftImgView->resize(0, newy, w / 2, newhigh);
     _rightImgView->resize(w/2, newy, w / 2, newhigh);
+    updateBoxImages();
 
-    widths[1] = (w - 40) / 2;
+    widths[1] = (w - widths[0]) / 2;
     widths[2] = widths[1];
     _listbox->column_widths(widths);
     
@@ -288,42 +298,61 @@ void updateTitle(const char *pathL, Fl_Shared_Image *imgL, const char *pathR, Fl
         _btnDiff->deactivate();
 }
 
+void updateBoxImages()
+{
+    if (!_leftImage || !_rightImage)
+        return;
+
+    // TODO size images proportionally to view size
+    // both images exist
+    int iw = _leftImgView->w();
+    int ih = _leftImgView->h();
+
+    if (_leftImgView->image())
+        _leftImgView->image()->release();
+    if (_rightImgView->image())
+        _rightImgView->image()->release();
+
+    _leftImgView->image(_leftImage->copy(iw, ih));
+    _rightImgView->image(_rightImage->copy(iw, ih));
+
+    _leftImgView->redraw();
+    _rightImgView->redraw();
+
+}
+
 void onListClick(Fl_Widget* w, void* d)
 {
     if (_listbox->size() < 1) // list is now empty, done
         return;
-    
+
     int line = _listbox->value();
-    if (!line) 
+    if (!line)
         line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
-        
+
     int data = (intptr_t)_listbox->data(line);
     size_t max = GetPairCount();
     if (data >= max)
         return;
 
-//    printf("LB: val: %d data:%d\n", line, data);
-
     Pair* p = GetPair(data);
     const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
     const char* pathR = GetFD(p->FileRightDex)->Name->c_str();
 
-//     printf("PathL: %s\n", pathL);
-//     printf("PathR: %s\n", pathR);
+    if (_leftImage) { _leftImage->release(); _leftImage = NULL; }
+    if (_rightImage) { _rightImage->release(); _rightImage = NULL; }
 
-    Fl_Shared_Image* imgL = Fl_Shared_Image::get(pathL);
-    Fl_Shared_Image* imgR = Fl_Shared_Image::get(pathR);
+    _leftImage = Fl_Shared_Image::get(pathL);
+    _rightImage = Fl_Shared_Image::get(pathR);
 
     // imgL or imgR may be null [file missing]
     // Force selection of next entry
-    if (!imgL || !imgR)
+    if (!_leftImage || !_rightImage)
     {
         p->valid = false;
 
         // TODO do this w/o recursion!
         // TODO needs to be done in the viewlist ???
-        if (imgL) imgL->release();
-        if (imgR) imgR->release();
         _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
         _listbox->remove(line);
         _listbox->redraw();
@@ -331,27 +360,9 @@ void onListClick(Fl_Widget* w, void* d)
         return;
     }
 
-    // TODO size images proportionally to view size
-    // both images exist
-    int iw = _leftImgView->w();
-    int ih = _leftImgView->h();
-
-     if (_leftImgView->image())
-         _leftImgView->image()->release();
-     if (_rightImgView->image())
-         _rightImgView->image()->release();
-
-    _leftImgView->image(imgL->copy(iw, ih));
-    _rightImgView->image(imgR->copy(iw,ih));
-
-    updateTitle(pathL, imgL, pathR, imgR);
-    
-    imgL->release();
-    imgR->release();
-
-    _leftImgView->redraw();
-    _rightImgView->redraw();
-    
+    updateTitle(pathL, _leftImage, pathR, _rightImage);
+    updateBoxImages();
+  
     // ensure the current line is up a little bit - can't click to get to next line sometimes
     _listbox->bottomline(line + 5);
 }
@@ -593,6 +604,7 @@ int main(int argc, char** argv)
 
     fl_register_images();
 
+    // TODO : use actual size when building controls?
     MainWin window(x, y, w, h);
 
     _menu = new Fl_Menu_Bar(0, 0, window.w(), 25);
@@ -603,7 +615,12 @@ int main(int argc, char** argv)
     _listbox->color(FL_BACKGROUND_COLOR, FL_GREEN);
     _listbox->callback(onListClick);
     _listbox->column_char('|');
-    _listbox->column_widths(widths);
+    _listbox->column_widths(widths); // TODO how to calculate 0-th width to fit "DUP" at selected font and size?
+
+    // TODO options to set these
+    //Fl_Fontsize blah = _listbox->textsize(); // 14
+    _listbox->textsize(14);
+    //_listbox->textfont(FL_COURIER);
 
     window.resizable(_listbox);
 
@@ -656,6 +673,11 @@ int main(int argc, char** argv)
 #endif
 
     initShow();
+
+    window.resize(x,y,w+1,h-1); // Hack: force everything to adjust to actual size
+    window.resize(x, y, w, h);
+
+    _leftImage = _rightImage = NULL;
 
     _window = &window;
     Fl::add_handler(handleSpecial); // handle internal events

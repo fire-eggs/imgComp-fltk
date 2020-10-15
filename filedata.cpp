@@ -251,9 +251,9 @@ char* GetPairText(int who) // the text to display for a specific pair
 
     Pair* p = _viewlist->at(who);
     if (p->Val == 0 && p->CRCMatch)
-        strcat(buff, "DUP|");
+        strcat(buff, "DUP | ");
     else
-        sprintf(buff, "%03d|", p->Val);
+        sprintf(buff, "%03d | ", p->Val);
     FileData* dataL = _data.Get(p->FileLeftDex);
     FileData* dataR = _data.Get(p->FileRightDex);
 

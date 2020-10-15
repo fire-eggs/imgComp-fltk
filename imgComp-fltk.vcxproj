@@ -121,7 +121,7 @@
       <AdditionalIncludeDirectories>E:\proj\FLTK14\build4;E:\proj\FLTK14\;E:\fltk0\libwebp;E:\fltk0\libwebp\src;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>E:\proj\FLTK14\build4\lib\MinSizeRel;E:\fltk0\libwebp\output\release-static\x64\lib;E:\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\proj\FLTK14\build4\lib\MinSizeRel;E:\proj\libwebp\output\release-static\x64\lib;E:\proj\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>fltk.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;libwebp.lib;libwebpdemux.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;comctl32.lib;Ws2_32.lib;jpeg-static.lib</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
