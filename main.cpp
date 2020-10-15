@@ -540,10 +540,33 @@ void lockR_cb(Fl_Widget* w, void* d)
         _btnRDup->activate();
 }
 
+// TODO stolen from FLTK source... genericize?
+static void popup(Fl_File_Chooser* filechooser) 
+{
+    filechooser->show();
+
+    // deactivate Fl::grab(), because it is incompatible with modal windows
+    Fl_Window* g = Fl::grab();
+    if (g) Fl::grab(0);
+
+    while (filechooser->shown())
+        Fl::wait();
+
+    if (g) // regrab the previous popup menu, if there was one
+        Fl::grab(g);
+}
+
 void load_cb(Fl_Widget* , void* )
 {
     char filename[1024] = "";
-    loadfile = fl_file_chooser("Open phash file", "*.phashc", filename);
+    Fl_File_Chooser* choose = new Fl_File_Chooser(filename, "*.phashc", 0, "Open phash file");
+    choose->preview(false); // force preview off
+    popup(choose);
+    loadfile = (char*)choose->value();
+
+    // TODO can't control file_chooser location because underlying window is not exposed by the class
+
+    //loadfile = fl_file_chooser("Open phash file", "*.phashc", filename);
     if (!loadfile)
         return;
 
