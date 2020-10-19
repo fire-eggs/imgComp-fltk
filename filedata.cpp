@@ -253,6 +253,8 @@ void CompareFiles()
 
 size_t GetPairCount() // the number of visible pairs
 {
+    if (!_viewlist)
+        return 0;
     return _viewlist->size(); 
 }
 
@@ -285,6 +287,8 @@ void* GetPairData(int who) // the data to store for a specific pair
 
 Pair* GetPair(int who)
 {
+    if (!_viewlist)
+        return NULL;
     return _viewlist->at(who);
 }
 
@@ -339,6 +343,9 @@ std::vector<Pair*> *FilterMatchingSources()
 
 void FilterAndSort(bool filter)
 {
+    if (!_pairlist)
+        return; 
+
     std::sort(_pairlist->begin(), _pairlist->end(), Compare);
 
     // filter
