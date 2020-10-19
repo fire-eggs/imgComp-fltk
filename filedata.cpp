@@ -287,7 +287,7 @@ void* GetPairData(int who) // the data to store for a specific pair
 
 Pair* GetPair(int who)
 {
-    if (!_viewlist)
+    if (!_viewlist || who >= GetPairCount())
         return NULL;
     return _viewlist->at(who);
 }
