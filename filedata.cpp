@@ -112,13 +112,25 @@ void readPhash(char* filename, int sourceId)
             continue;
 
         char* parts = strtok(buffer, "|");
-        char* end;
-        unsigned long long phash = strtoull(parts, &end, 10);
+        if (!parts) // unexpected data
+            continue;
+
+        unsigned long long phash = strtoull(parts, NULL, 10);
+        if (phash == 0ULL)
+            continue; // unexpected data: assuming hash cannot be zero
 
         parts = strtok(NULL, "|");
-        unsigned long crc = strtoul(parts, &end, 10);
+        if (!parts) // unexpected data
+            continue;
+
+        unsigned long crc = strtoul(parts, NULL, 10);
+        if (crc == 0ULL)
+            continue; // unexpected data: assuming CRC cannot be zero
 
         parts = strtok(NULL, "|");
+        if (!parts) // unexpected data
+            continue;
+
         parts[strlen(parts) - 1] = '\0'; //kill trailing newline
         FileData* fd = new FileData();
         fd->Name = new std::string(parts);
