@@ -296,6 +296,7 @@ void updateTitle(const char *pathL, Fl_Shared_Image *imgL, const char *pathR, Fl
         _btnDiff->activate();
     else
         _btnDiff->deactivate();
+    _btnDiff->redraw();
 }
 
 void updateBoxImages()
