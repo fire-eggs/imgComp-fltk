@@ -128,7 +128,7 @@ void updateMRU();
 
 static void MenuCB(Fl_Widget* window_p, void *userdata)
 {
-    long choice = (long)userdata;
+    long choice = (long)(size_t)userdata;
     switch (choice)
     {
     case MI_LOAD:
