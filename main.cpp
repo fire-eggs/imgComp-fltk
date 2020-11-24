@@ -4,7 +4,8 @@
 #include <FL/Fl_Menu_Item.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_File_Chooser.H>
-#include <FL/Fl_Shared_Image.H>
+//#include <FL/Fl_Shared_Image.H>
+#include "SharedImageExt.h"
 
 #include "filedata.h"
 #include "ViewWin.h"
@@ -49,8 +50,8 @@ char *loadfile; // hacky
 
 extern char *_logpath; // hacky
 
-Fl_Shared_Image* _leftImage;
-Fl_Shared_Image* _rightImage;
+SharedImageExt* _leftImage;
+SharedImageExt* _rightImage;
 
 int widths[] = {50, 340, 340, 0};
 
@@ -275,7 +276,7 @@ double getNiceFileSize(const char *path)
     return sizeK;
 }
 
-void updateTitle(const char *pathL, Fl_Shared_Image *imgL, const char *pathR, Fl_Shared_Image *imgR)
+void updateTitle(const char *pathL, Fl_Image *imgL, const char *pathR, Fl_Image *imgR)
 {
     int ilw = imgL->w();
     int ilh = imgL->h();
@@ -314,8 +315,8 @@ void updateBoxImages()
     if (_rightImgView->image())
         _rightImgView->image()->release();
 
-    _leftImgView->image(_leftImage->copy(iw, ih));
-    _rightImgView->image(_rightImage->copy(iw, ih));
+    _leftImgView->image(_leftImage->image()->copy(iw, ih));
+    _rightImgView->image(_rightImage->image()->copy(iw, ih));
 
     _leftImgView->redraw();
     _rightImgView->redraw();
@@ -343,8 +344,8 @@ void onListClick(Fl_Widget* w, void* d)
     if (_leftImage) { _leftImage->release(); _leftImage = NULL; }
     if (_rightImage) { _rightImage->release(); _rightImage = NULL; }
 
-    _leftImage = Fl_Shared_Image::get(pathL);
-    _rightImage = Fl_Shared_Image::get(pathR);
+    _leftImage = SharedImageExt::LoadImage(pathL);
+    _rightImage = SharedImageExt::LoadImage(pathR);
 
     // imgL or imgR may be null [file missing]
     // Force selection of next entry
@@ -361,7 +362,7 @@ void onListClick(Fl_Widget* w, void* d)
         return;
     }
 
-    updateTitle(pathL, _leftImage, pathR, _rightImage);
+    updateTitle(pathL, _leftImage->image(), pathR, _rightImage->image());
     updateBoxImages();
   
     // ensure the current line is up a little bit - can't click to get to next line sometimes
@@ -424,7 +425,8 @@ void btnView(bool left)
     Pair* p = GetCurrentPair();
     if (!p)
         return;
-    showView(p, left);
+    showView((Fl_Shared_Image *)_leftImage->image(), (Fl_Shared_Image*)_rightImage->image(), left);
+//    showView(p, left);
     
     _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
 }
@@ -444,7 +446,8 @@ void btnDiff(bool left, bool stretch)
     Pair* p = GetCurrentPair();
     if (!p)
         return;
-    showDiff(p, stretch);
+    showDiff(_leftImage->image(), _rightImage->image(), stretch);
+    //showDiff(p, stretch);
 
     _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
 }

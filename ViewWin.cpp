@@ -9,6 +9,9 @@ Fl_Double_Window* _win;
 Fl_Image_Display* _disp;
 Pair* _viewing;
 Fl_RGB_Image* _view;
+Fl_Shared_Image* _viewL;
+Fl_Shared_Image* _viewR;
+
 bool _showLeft;
 Fl_Button* _bFull; // the 'Fit'/'100%' button
 bool zoomFit;
@@ -38,14 +41,23 @@ void ViewImage()
 {
     if (!diffMode)
     {
-        const char* path;
+        const char* path = NULL;
 
-        if (_showLeft)
-            path = GetFD(_viewing->FileLeftDex)->Name->c_str();
+        Fl_Shared_Image* img;
+        if (_viewing)
+        {
+            if (_showLeft)
+                path = GetFD(_viewing->FileLeftDex)->Name->c_str();
+            else
+                path = GetFD(_viewing->FileRightDex)->Name->c_str();
+
+            img = Fl_Shared_Image::get(path);
+        }
         else
-            path = GetFD(_viewing->FileRightDex)->Name->c_str();
+        {
+            img = _showLeft ? _viewL : _viewR;
+        }
 
-        Fl_Shared_Image* img = Fl_Shared_Image::get(path);
         if (!img)
             return;
 
@@ -54,11 +66,20 @@ void ViewImage()
         _disp->scale(scale);
 
         char buff[1024];
-        if (_showLeft)
-            sprintf(buff, "Left image: %s", path);
+        if (path)
+        {
+            if (_showLeft)
+                sprintf(buff, "Left image: %s", path);
+            else
+                sprintf(buff, "Right image: %s", path);
+        }
         else
-            sprintf(buff, "Right image: %s", path);
-
+        {
+            if (_showLeft)
+                sprintf(buff, "Left image: ?"); // TODO display of path
+            else
+                sprintf(buff, "Right image: ?"); // TODO display of path
+        }
         _win->label(buff);
     }
     else
@@ -172,6 +193,26 @@ void makeWin()
     _win->resizable(_disp);
 }
 
+void showView(Fl_Shared_Image* leftI, Fl_Shared_Image* rightI, bool startLeft)
+{
+    if (!_win)
+        makeWin();
+
+    diffMode = false;
+    _viewing = NULL;
+    _view = NULL;
+    _viewL = leftI;
+    _viewR = rightI;
+    _showLeft = startLeft;
+    _disp->scale(zoomFit ? 0.0 : 1.0);
+
+    _win->show();
+    ViewImage(); // NOTE: title bar doesn't update until shown
+
+    while (_win->shown())
+        Fl::wait();
+}
+
 void showView(Pair* toview, bool startLeft)
 {
     if (!_win)
@@ -224,7 +265,7 @@ void setOutPixel(unsigned char* outbuf, unsigned long offset, int diff,
 unsigned char* outbufL;
 unsigned char* outbufR;
 
-bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
+bool doDiff(Fl_Image* imgL, Fl_Image* imgR)
 {
     // 2. get the image pixel data [assuming Fl_RGB_Image for now]
     const char* const* dataL0 = imgL->data();
@@ -271,6 +312,34 @@ bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
     return true;
 }
 
+bool doDiff1(Fl_Image* imgL, Fl_Image* imgR, bool stretch, bool release)
+{
+    // Deal with stretch
+    if (!stretch)
+    {
+        return doDiff(imgL, imgR);
+    }
+
+    int newH = imgL->h();
+    if (imgR->h() > newH)
+        newH = imgR->h();
+    int newW = imgL->w();
+    if (imgR->w() > newW)
+        newW = imgR->w();
+    Fl_Image* newImageL = imgL->copy(newW, newH);
+    Fl_Image* newImageR = imgR->copy(newW, newH);
+
+    auto res = doDiff(newImageL, newImageR);
+    newImageL->release();
+    newImageR->release();
+    return res;
+}
+
+bool diff(Pair* toview, bool stretch, Fl_Image* imgL, Fl_Image* imgR)
+{
+    return doDiff1(imgL, imgR, stretch, false);
+}
+
 bool diff(Pair* toview, bool stretch)
 {
     // 1. get the two images
@@ -294,31 +363,29 @@ bool diff(Pair* toview, bool stretch)
         return false; // punt on other depths for now
     }
 
-    // Deal with stretch
-    if (!stretch)
-    {
-        auto ret = doDiff(imgL, imgR);
-        imgL->release();
-        imgR->release();
-        return ret;
-    }
+    bool res = doDiff1(imgL, imgR, stretch, true);
 
-    int newH = imgL->h();
-    if (imgR->h() > newH)
-        newH = imgR->h();
-    int newW = imgL->w();
-    if (imgR->w() > newW)
-        newW = imgR->w();
-    Fl_Shared_Image* newImageL = (Fl_Shared_Image *)imgL->copy(newW, newH);
-    Fl_Shared_Image* newImageR = (Fl_Shared_Image *)imgR->copy(newW, newH);
     imgL->release();
     imgR->release();
-    return doDiff(newImageL, newImageR);
+    return res;
 }
 
 void showDiff(Pair* toview, bool stretch)
 {
     if (!diff(toview, stretch))
+        return;
+    diffMode = true;
+    showView();
+    _diffImageL->release();
+    _diffImageR->release();
+    free(outbufL);
+    free(outbufR);
+    outbufL = outbufR = NULL;
+}
+
+void showDiff(Fl_Image* imgL, Fl_Image* imgR, bool stretch)
+{
+    if (!diff(NULL, stretch, imgL, imgR))
         return;
     diffMode = true;
     showView();

@@ -132,7 +132,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MostRecentPaths.cpp" />
     <ClCompile Include="procThread.cpp" />
+    <ClCompile Include="SharedImageExt.cpp" />
     <ClCompile Include="ViewWin.cpp" />
+    <ClCompile Include="Webp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="events.h" />
@@ -140,6 +142,7 @@
     <ClInclude Include="Fl_Image_Display.H" />
     <ClInclude Include="MostRecentPaths.h" />
     <ClInclude Include="prefs.h" />
+    <ClInclude Include="SharedImageExt.h" />
     <ClInclude Include="threads.h" />
     <ClInclude Include="ViewWin.h" />
   </ItemGroup>
