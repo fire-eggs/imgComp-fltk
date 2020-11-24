@@ -221,6 +221,9 @@ void setOutPixel(unsigned char* outbuf, unsigned long offset, int diff,
     }
 }
 
+unsigned char* outbufL;
+unsigned char* outbufR;
+
 bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
 {
     // 2. get the image pixel data [assuming Fl_RGB_Image for now]
@@ -236,8 +239,8 @@ bool doDiff(Fl_Shared_Image* imgL, Fl_Shared_Image* imgR)
 
     // 3. create the output pixel buffer
     auto size = h * w * d;
-    unsigned char* outbufL = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
-    unsigned char* outbufR = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
+    outbufL = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
+    outbufR = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
 
     // 4. loop x,y thru two images, write diff to output
     for (int y = 0; y < h; y++)
@@ -321,4 +324,7 @@ void showDiff(Pair* toview, bool stretch)
     showView();
     _diffImageL->release();
     _diffImageR->release();
+    free(outbufL);
+    free(outbufR);
+    outbufL = outbufR = NULL;
 }
