@@ -51,6 +51,8 @@ void readPhash(char* filename, int sourceId)
         if (!buffer[0])
             continue;
 
+        // Lines of the form <hash>|<crc>|<animated>|<filepath>
+
         char* parts = strtok(buffer, "|");
         if (!parts) // unexpected data
             continue;

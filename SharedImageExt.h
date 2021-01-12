@@ -1,5 +1,6 @@
 #pragma once
 #include <FL/Fl_Shared_Image.H>
+#include <FL/Fl_Anim_GIF_Image.H>
 #include <webp\decode.h>
 
 extern Fl_Shared_Image* LoadWebp(const char*, WebPDecBuffer**);
@@ -37,6 +38,14 @@ public:
 	}
 
 	Fl_Image* image()
+	{
+		Fl_Anim_GIF_Image *animgif_ = dynamic_cast<Fl_Anim_GIF_Image*>(_img->KBR());
+		if (animgif_)
+			return animgif_->image(0); // always return frame 0 for static image
+		return _img;
+	}
+
+	Fl_Image* baseImage()
 	{
 		return _img;
 	}

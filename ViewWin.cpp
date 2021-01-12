@@ -149,6 +149,7 @@ void makeWin()
 
     zoomFit = true; // start in 'fit' mode
     _disp->_scrollbarsOn = false;
+    _disp->_drawChecker = false;
 
     // btnbar
     // swap, close, 100% / fit, zoom in, zoom out
@@ -224,10 +225,11 @@ void showView(Pair* toview, bool startLeft)
     _viewL = _viewR = NULL;
     _showLeft = startLeft;
     _disp->scale(zoomFit ? 0.0 : 1.0);
+    _disp->label("");
 
-    _win->show();
     ViewImage(); // NOTE: title bar doesn't update until shown
 
+    _win->show();
     while (_win->shown())
         Fl::wait();
 }

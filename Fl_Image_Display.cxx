@@ -105,7 +105,7 @@ Fl_Image_Display::Fl_Image_Display(int X, int Y, int W, int H)
 
 	check = new Fl_Tiled_Image(new Fl_Pixmap((const char* const*)checker_xpm));
 
-	color(FL_GREEN);
+	//color(FL_GREEN);
 
 	selection_color(FL_BACKGROUND_COLOR);
 	labeltype(FL_NORMAL_LABEL);
@@ -135,7 +135,7 @@ Fl_Image_Display::Fl_Image_Display(int X, int Y, int W, int H)
 	resize(X, Y, W, H);
 
 	_scrollbarsOn = true;
-	_drawChecker = true;
+	_drawChecker = false;
 
 	zoomMode_ = ZoomMode::Auto; // TODO prefs?
 	_zoomCallback = NULL;
@@ -244,7 +244,7 @@ void Fl_Image_Display::draw()
 		{
 			if (animgif_->is_animated() && animgif_->image())
 			{
-				D = animgif_->image()->d();
+				D = animgif_->image(0)->d(); // TODO always drawing frame 0, not "current"
 			}
 			else
 			{
@@ -956,33 +956,31 @@ void
 Fl_Image_Display::value(Fl_Shared_Image* v)
 {
 #ifdef ANIMGIF     
+
+#if false // TODO punting on animated GIF playback
 	// stop 'previous' gif from playing
 	if (animgif_)
 	{
 		animgif_->canvas(NULL); // Using stop() seems to kill playback altogether
 		animgif_ = NULL;
 	}
+
+	animgif_ = dynamic_cast<Fl_Anim_GIF_Image*>(v->KBR());
+
+	if (animgif_ && animgif_->is_animated())
+	{
+		animgif_->canvas(this, Fl_Anim_GIF_Image::Start |
+			Fl_Anim_GIF_Image::DontSetAsImage |
+			Fl_Anim_GIF_Image::DontResizeCanvas);
+	}
 #endif
 
-	if (v && v->num_images() > 0) // v->image()
-	{
-#ifdef ANIMGIF        
-		animgif_ = dynamic_cast<Fl_Anim_GIF_Image*>(v->KBR());
+	animgif_ = dynamic_cast<Fl_Anim_GIF_Image*>(v->KBR());
 
-		if (animgif_)
-		{
-			animgif_->canvas(this, Fl_Anim_GIF_Image::Start |
-				Fl_Anim_GIF_Image::DontSetAsImage |
-				Fl_Anim_GIF_Image::DontResizeCanvas);
-		}
-#endif		
-		value_ = v;
-		set_zoommode(zoomMode_);
-	}
-	else
-	{
-		value_ = v;
-	}
+#endif
+
+	value_ = v;
+	set_zoommode(zoomMode_);
 
 	// Make sure new image position is reset
 	// TODO: settings (top, center, ?)
@@ -992,10 +990,6 @@ Fl_Image_Display::value(Fl_Shared_Image* v)
 
 void Fl_Image_Display::zoomDelta(int direction)
 {
-	// TODO why would no shared images be a problem? [viewing non-shared-image]
-	//if (!value_ || value_->num_images() < 1)
-	//	return; 
-
 	if (!value_)
 		return;
 

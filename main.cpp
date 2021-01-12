@@ -7,6 +7,7 @@
 //#include <FL/Fl_Shared_Image.H>
 #include "SharedImageExt.h"
 
+#include "Fl_Image_Display.H"
 #include "filedata.h"
 #include "ViewWin.h"
 #include "prefs.h"
@@ -361,7 +362,7 @@ void onListClick(Fl_Widget* w, void* d)
         return;
     }
 
-    updateTitle(pathL, _leftImage->image(), pathR, _rightImage->image());
+    updateTitle(pathL, _leftImage->baseImage(), pathR, _rightImage->baseImage());
     updateBoxImages();
   
     // ensure the current line is up a little bit - can't click to get to next line sometimes
@@ -424,8 +425,8 @@ void btnView(bool left)
     Pair* p = GetCurrentPair();
     if (!p)
         return;
-    showView((Fl_Shared_Image *)_leftImage->image(), (Fl_Shared_Image*)_rightImage->image(), left);
-//    showView(p, left);
+    showView(_leftImage->baseImage(), _rightImage->baseImage(), left);
+    //showView(p, left);
     
     _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
 }
@@ -657,6 +658,8 @@ int main(int argc, char** argv)
     filterSame = false;
 
     fl_register_images();
+    Fl_Image_Display::set_gamma(2.2f);
+    Fl_Anim_GIF_Image::animate = false;
 
     // TODO : use actual size when building controls?
     MainWin window(x, y, w, h);
