@@ -11,6 +11,8 @@ struct FileData
     int Source;
     unsigned long long PHash; // 64 bit
     unsigned long CRC;        // 32 bit
+    int Animated;             // image is animated or not
+    int Archive;              // from archive (as archive list index)
 };
 
 class Pair

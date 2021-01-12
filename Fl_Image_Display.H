@@ -97,7 +97,7 @@ class FL_EXPORT Fl_Image_Display : public Fl_Group
   int			start_x() const { return start_x_; }
   int			start_y() const { return start_y_; }
   void			value(Fl_Shared_Image *v);
-  Fl_Shared_Image	*value() { return value_; }
+  Fl_Shared_Image	    *value() { return value_; }
   int			xposition() { return xscrollbar_.value(); }
   int			yposition() { return yscrollbar_.value(); }
 

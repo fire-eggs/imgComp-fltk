@@ -33,13 +33,13 @@ const char * yMount = "/run/user/1000/gvfs/smb-share:domain=192.168.111.157,serv
 
 void readPhash(char* filename, int sourceId)
 {
-    // TODO danbooru .phashc files do NOT have the firstline!
     // TODO need general mechanism to xlate Windows drive letters!
 
     FILE* fptr = fl_fopen(filename, "r");
     char buffer[2048];
     int limit = LIMIT;
     bool firstLine = true;
+    int is_animated = false;
     while (fgets(buffer, 2048, fptr))
     {
         if (firstLine)
@@ -70,6 +70,15 @@ void readPhash(char* filename, int sourceId)
         parts = strtok(NULL, "|");
         if (!parts) // unexpected data
             continue;
+
+        if (strlen(parts) == 1)  // phash-fltk
+        {
+            is_animated = parts[0] == '1';
+
+        parts = strtok(NULL, "|");
+        if (!parts) // unexpected data
+            continue;
+        }
 
         parts[strlen(parts) - 1] = '\0'; //kill trailing newline
         FileData* fd = new FileData();
@@ -109,6 +118,8 @@ void readPhash(char* filename, int sourceId)
         fd->Source = sourceId;
         fd->Vals = NULL;
         fd->FVals = NULL;
+        fd->Animated = is_animated;
+        fd->Archive = -1;
 
         _data.Add(fd);
 
@@ -166,6 +177,11 @@ void CompareOneFile(int me)
     for (int j = me + 1; j < count; j++)
     {
         FileData* they = _data.Get(j);
+
+        // animated and non-animated images can't match
+        if (my->Animated != they->Animated)
+            continue;
+
         int val = phashHamDist(my->PHash, they->PHash);
         if (val < THRESHOLD)
         {
