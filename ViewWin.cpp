@@ -9,8 +9,8 @@ Fl_Double_Window* _win;
 Fl_Image_Display* _disp;
 Pair* _viewing;
 Fl_RGB_Image* _view;
-Fl_Shared_Image* _viewL;
-Fl_Shared_Image* _viewR;
+Fl_Image* _viewL;
+Fl_Image* _viewR;
 
 bool _showLeft;
 Fl_Button* _bFull; // the 'Fit'/'100%' button
@@ -43,7 +43,7 @@ void ViewImage()
     {
         const char* path = NULL;
 
-        Fl_Shared_Image* img;
+        Fl_Image* img;
         if (_viewing)
         {
             if (_showLeft)
@@ -62,7 +62,7 @@ void ViewImage()
             return;
 
         auto scale = _disp->scale();
-        _disp->value(img);
+        _disp->value((Fl_Shared_Image *)img);
         _disp->scale(scale);
 
         char buff[1024];
@@ -193,7 +193,7 @@ void makeWin()
     _win->resizable(_disp);
 }
 
-void showView(Fl_Shared_Image* leftI, Fl_Shared_Image* rightI, bool startLeft)
+void showView(Fl_Image* leftI, Fl_Image* rightI, bool startLeft)
 {
     if (!_win)
         makeWin();
@@ -221,6 +221,7 @@ void showView(Pair* toview, bool startLeft)
     diffMode = false;
     _viewing = toview;
     _view = NULL;
+    _viewL = _viewR = NULL;
     _showLeft = startLeft;
     _disp->scale(zoomFit ? 0.0 : 1.0);
 
