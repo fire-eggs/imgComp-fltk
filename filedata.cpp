@@ -166,8 +166,8 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
     return (int)((x * h01) >> 56);
 }
 
-// Throw out any pair where delta exceeds 5
-static int THRESHOLD = 11; // Hamming distance always a multiple of two
+// Throw out any pair where delta exceeds 6
+static int THRESHOLD = 15; // Hamming distance always a multiple of two
 
 std::mutex _pair_lock;
 
