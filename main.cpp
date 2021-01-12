@@ -18,6 +18,7 @@
 #endif
 
 #include "events.h"
+#include "logging.h"
 
 void load_cb(Fl_Widget*, void*);
 void quit_cb(Fl_Widget*, void*);
@@ -643,7 +644,7 @@ int handleSpecial(int event)
 
 int main(int argc, char** argv)
 {
-    initlog();
+    initlog("imgcomp.log");
     
     // use remembered main window size
     _PREFS = new Prefs();  

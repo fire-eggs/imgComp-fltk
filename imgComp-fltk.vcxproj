@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="filedata.cpp" />
     <ClCompile Include="Fl_Image_Display.cxx" />
+    <ClCompile Include="logging.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MostRecentPaths.cpp" />
     <ClCompile Include="procThread.cpp" />
@@ -140,6 +141,7 @@
     <ClInclude Include="events.h" />
     <ClInclude Include="filedata.h" />
     <ClInclude Include="Fl_Image_Display.H" />
+    <ClInclude Include="logging.h" />
     <ClInclude Include="MostRecentPaths.h" />
     <ClInclude Include="prefs.h" />
     <ClInclude Include="SharedImageExt.h" />
