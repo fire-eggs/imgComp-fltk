@@ -330,7 +330,7 @@ Fl_Image_Display::handle(int event)	// I - Event to handle
 				if (factor_)
 					scale(factor_ * 0.8f);
 				else
-					scale((float)xsize_ / (float)value_->w() * 0.8f);
+					scale((double)xsize_ / (double)value_->w() * 0.8f);
 
 				return (1);
 
@@ -1004,14 +1004,14 @@ void Fl_Image_Display::zoomDelta(int direction)
 		if (factor_)
 			scale(factor_ * 0.8f);
 		else
-			scale((float)xsize_ / (float)value_->w() * 0.8f);
+			scale((double)xsize_ / (double)value_->w() * 0.8f);
 	}
 	else
 	{
 		if (factor_)
 			scale(factor_ * 1.25f);
 		else
-			scale((float)xsize_ / (float)value_->w() * 1.25f);
+			scale((double)xsize_ / (double)value_->w() * 1.25f);
 	}
 }
 
@@ -1020,7 +1020,7 @@ void Fl_Image_Display::zoomIn()
 	if (factor_)
 		scale(factor_ * 1.25f);
 	else
-		scale((float)xsize_ / (float)value_->w() * 1.25f);
+		scale((double)xsize_ / (double)value_->w() * 1.25f);
 }
 
 void Fl_Image_Display::zoomIntoMouse()

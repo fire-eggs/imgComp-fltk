@@ -279,7 +279,7 @@ bool doDiff(Fl_Image* imgL, Fl_Image* imgR)
     int d = imgL->d();
 
     // 3. create the output pixel buffer
-    auto size = h * w * d;
+    size_t size = (size_t)h * (size_t)w * d;
     outbufL = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
     outbufR = (unsigned char*)malloc(size); // NOTE: *cannot* use 'new' here
 

@@ -49,8 +49,6 @@ Fl_Menu_Bar* _menu;
 
 char *loadfile; // hacky
 
-extern char *_logpath; // hacky
-
 SharedImageExt* _leftImage;
 SharedImageExt* _rightImage;
 
@@ -606,9 +604,12 @@ void copyToClip_cb(Fl_Widget*, void*)
 
     int size = strlen(pathL) + strlen(pathR) + 3;
     char* buff = (char *)malloc(size);
-    sprintf(buff, "%s\n%s", pathL, pathR);
-    Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
-    free(buff);
+    if (buff)
+    {
+        sprintf(buff, "%s\n%s", pathL, pathR);
+        Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
+        free(buff);
+    }
 }
 
 int handleSpecial(int event)

@@ -202,7 +202,7 @@ AnimatedImage* ReadAnimatedImage(const uint8_t* const data, size_t data_size)
 		curr_rgba = curr_frame->rgba;
 		curr_frame->duration = timestamp - prev_frame_timestamp;
 		curr_frame->is_key_frame = 0;  // Unused.
-		memcpy(curr_rgba, frame_rgba, image->canvas_width * 4 * image->canvas_height);
+		memcpy(curr_rgba, frame_rgba, (size_t)image->canvas_width * 4 * (size_t)image->canvas_height);
 
 		//// Needed only because we may want to compare with GIF later.
 		//CleanupTransparentPixels((uint32_t*)curr_rgba,

@@ -250,20 +250,6 @@ int Compare(Pair *me, Pair* other)
     if (me->CRCMatch)
         return true;
     return false;
-
-    //int delta = me->Val - other->Val;
-    //if (delta == 0)
-    //{
-    //    if (me->CRCMatch != other->CRCMatch)
-    //    {
-    //        if (me->CRCMatch)
-    //            return -1;
-    //        if (other->CRCMatch)
-    //            return 1;
-    //    }
-    //    //return Name.compare(other.Name);
-    //}
-    //return delta;
 }
 
 std::vector<Pair*> *FilterMatchingSources()
