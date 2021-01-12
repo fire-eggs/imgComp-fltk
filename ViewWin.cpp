@@ -340,6 +340,11 @@ bool doDiff1(Fl_Image* imgL, Fl_Image* imgR, bool stretch, bool release)
 
 bool diff(Pair* toview, bool stretch, Fl_Image* imgL, Fl_Image* imgR)
 {
+    if (imgL->d() != imgR->d())
+    {
+        return false; // punt on mixed depths for now
+    }
+
     return doDiff1(imgL, imgR, stretch, false);
 }
 
