@@ -1,6 +1,7 @@
 #include "filedata.h"
 #include <FL/Fl.H> // fl_fopen
 #include <FL/fl_ask.H> // fl_alert
+#include <FL/filename.H>
 #include <algorithm>
 #include <map>
 
@@ -9,11 +10,18 @@
 
 #include "logging.h"
 
+const char* ExtractFile(std::string arcpath, std::string filepath);
+
 FileSet _data;
 std::vector<Pair*>* _pairlist;
 std::vector<Pair*>* _viewlist;
 
 #define LIMIT 50000
+
+// Throw out any pair where delta exceeds 6
+static int THRESHOLD = 15; // Hamming distance always a multiple of two
+
+std::mutex _pair_lock;
 
 std::map<std::string, int>* archiveDict;
 std::vector<std::string>* archiveList;
@@ -24,6 +32,7 @@ int addArchive(const char* archivePath)
     {
         archiveDict = new std::map<std::string, int>();
         archiveList = new std::vector<std::string>();
+
     }
     std::string lookup(archivePath);
 
@@ -55,8 +64,8 @@ std::string* replaceStrChar(std::string *str, const std::string& replace, char c
   return str; // return our new string.
 }
 
-const char * gMount = "/run/user/1000/gvfs/smb-share:domain=troll,server=troll,share=g,user=kevin/";
-const char * yMount = "/run/user/1000/gvfs/smb-share:domain=192.168.111.157,server=192.168.111.157,share=sambashare,user=guest/";
+//const char * gMount = "/run/user/1000/gvfs/smb-share:domain=troll,server=troll,share=g,user=kevin/";
+//const char * yMount = "/run/user/1000/gvfs/smb-share:domain=192.168.111.157,server=192.168.111.157,share=sambashare,user=guest/";
 
 void readPhash(char* filename, int sourceId)
 {
@@ -194,11 +203,6 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
     return (int)((x * h01) >> 56);
 }
 
-// Throw out any pair where delta exceeds 6
-static int THRESHOLD = 15; // Hamming distance always a multiple of two
-
-std::mutex _pair_lock;
-
 void CompareOneFile(int me)
 {
     FileData* my = _data.Get(me);
@@ -283,6 +287,28 @@ Pair* GetPair(int who)
 FileData* GetFD(int who)
 {
     return _data.Get(who);
+}
+
+const char* GetActualPath(Pair* p, bool left)
+{
+    FileData* fd = GetFD(left ? p->FileLeftDex : p->FileRightDex);
+    if (fd->Archive == -1)
+        return fd->Name->c_str(); // TODO memory leak?
+
+    if (fd->ActualPath)
+        return fd->ActualPath->c_str();
+
+    // 1. get archive path
+    std::string arcPath = (*archiveList)[fd->Archive];
+
+    // 2. extract file from archive somewhere
+    const char* outpath = ExtractFile(arcPath, *fd->Name);
+    fd->ActualPath = new std::string(outpath);
+
+    // 3. return path to extracted file
+    return fd->ActualPath->c_str();
+
+    // TODO: how/when to delete extracted files?
 }
 
 // C++ compare function : return true if me < other

@@ -338,16 +338,19 @@ void onListClick(Fl_Widget* w, void* d)
         return;
 
     Pair* p = GetPair(data);
-    const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
-    const char* pathR = GetFD(p->FileRightDex)->Name->c_str();
+    //const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    //const char* pathR = GetFD(p->FileRightDex)->Name->c_str();
+    const char* pathL = GetActualPath(p, true);
+    const char* pathR = GetActualPath(p, false);
 
+    // release existing image(s)
     if (_leftImage) { _leftImage->release(); _leftImage = NULL; }
     if (_rightImage) { _rightImage->release(); _rightImage = NULL; }
 
     _leftImage = SharedImageExt::LoadImage(pathL);
     _rightImage = SharedImageExt::LoadImage(pathR);
 
-    // imgL or imgR may be null [file missing]
+    // _leftImage or _rightImage may be null [file missing]
     // Force selection of next entry
     if (!_leftImage || !_rightImage)
     {
