@@ -36,6 +36,8 @@ void readPhash(char* filename, int sourceId)
     // TODO need general mechanism to xlate Windows drive letters!
 
     FILE* fptr = fl_fopen(filename, "r");
+    if (!fptr)
+        return; // TODO remove from MRU list (?)
     char buffer[2048];
     int limit = LIMIT;
     bool firstLine = true;
@@ -122,6 +124,7 @@ void readPhash(char* filename, int sourceId)
         fd->FVals = NULL;
         fd->Animated = is_animated;
         fd->Archive = -1;
+        fd->ActualPath = NULL;
 
         _data.Add(fd);
 
@@ -362,4 +365,11 @@ void RemoveMissingFile(int filedex)
             p->FileRightDex == filedex)
             _viewlist->erase(_viewlist->begin() + i);
     }
+}
+
+const char* GetActualPath(Pair* p, bool left)
+{
+    FileData* fd = GetFD(left ? p->FileLeftDex : p->FileRightDex);
+    //if (fd->Archive == -1)
+    return fd->Name->c_str(); // TODO memory leak?
 }

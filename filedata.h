@@ -13,6 +13,7 @@ struct FileData
     unsigned long CRC;        // 32 bit
     int Animated;             // image is animated or not
     int Archive;              // from archive (as archive list index)
+    std::string* ActualPath;    // where extracted from archive onto disk
 };
 
 class Pair
@@ -91,3 +92,5 @@ void FilterAndSort(bool);
 
 bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath);
 void RemoveMissingFile(int filedex);
+
+const char* GetActualPath(Pair* p, bool left);

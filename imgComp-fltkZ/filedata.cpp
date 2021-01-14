@@ -63,6 +63,9 @@ void readPhash(char* filename, int sourceId)
     // TODO need general mechanism to xlate Windows drive letters!
 
     FILE* fptr = fl_fopen(filename, "r");
+    if (!fptr)
+        return;
+
     char buffer[2048];
     int limit = LIMIT;
     bool firstLine = true;
@@ -146,6 +149,7 @@ void readPhash(char* filename, int sourceId)
         fd->FVals = NULL;
         fd->Animated = 0;
         fd->Archive = archiveIndex;
+        fd->ActualPath = NULL;
 
         _data.Add(fd);
 
@@ -325,8 +329,9 @@ void FilterAndSort(bool filter)
         _viewlist = new std::vector<Pair*>(*_pairlist);
 }
 
-#include <FL/filename.H>
-
+#ifdef MoveFile
+#undef MoveFile
+#endif
 bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
 {
     //printf("MoveFile: srcpath: %s\n", srcpath);
