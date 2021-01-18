@@ -21,6 +21,8 @@
 #include "events.h"
 #include "logging.h"
 
+#include "FL_Tree_Columns.hpp"
+
 void load_cb(Fl_Widget*, void*);
 void quit_cb(Fl_Widget*, void*);
 void clear_cb(Fl_Widget*, void*);
@@ -38,7 +40,8 @@ Prefs* _PREFS;
 // TODO push into MainWin class?
 int sourceId;
 bool filterSame;
-Fl_Browser* _listbox;
+//Fl_Browser* _listbox;
+TreeWithColumns* _pairview;
 Fl_Box* _leftImgView;
 Fl_Box* _rightImgView;
 Fl_Group* _btnBox;
@@ -55,7 +58,7 @@ extern char* _logpath; // hacky
 SharedImageExt* _leftImage;
 SharedImageExt* _rightImage;
 
-int widths[] = { 50, 340, 340, 0 };
+int widths[] = { 40, 340, 340, 0 };
 
 // NOTE: relying on toggle menus auto initialized to OFF
 
@@ -86,8 +89,10 @@ void MainWin::resize(int x, int y, int w, int h)
 
     // size children as desired
     int newhigh = (int)(h * 0.4 - BTN_BOX_HALFHIGH);
-    _listbox->resize(_listbox->x(), _listbox->y(), w, newhigh);
-    int newy = _listbox->y() + newhigh + BTN_BOX_HIGH;
+    //_listbox->resize(_listbox->x(), _listbox->y(), w, newhigh);
+    _pairview->resize(_pairview->x(), _pairview->y(), w, newhigh);
+    //int newy = _listbox->y() + newhigh + BTN_BOX_HIGH;
+    int newy = _pairview->y() + newhigh + BTN_BOX_HIGH;
     _btnBox->resize(0, newy - BTN_BOX_HIGH, w, BTN_BOX_HIGH);
     newhigh = h - newy; // (int)(h * 0.6 - BTN_BOX_HALFHIGH);
     _leftImgView->resize(0, newy, w / 2, newhigh);
@@ -96,7 +101,7 @@ void MainWin::resize(int x, int y, int w, int h)
 
     widths[1] = (w - widths[0]) / 2;
     widths[2] = widths[1];
-    _listbox->column_widths(widths);
+    _pairview->column_widths(widths);
 
     _PREFS->setWinRect(MAIN_PREFIX, x, y, w, h);
 }
@@ -234,40 +239,55 @@ void updateMRU()
 
 Pair* GetCurrentPair()
 {
-    // Find the image pair currently selected in the listbox (null if none)
-
-    int line = _listbox->value();
-    if (line == 0)
+    Fl_Tree_Item* sel = _pairview->first_selected_item();
+    if (!sel)
         return NULL;
+    int data = (int)sel->user_data();
 
-    int data = (intptr_t)_listbox->data(line);
+    //// Find the image pair currently selected in the listbox (null if none)
+
+    //int line = _listbox->value();
+    //if (line == 0)
+    //    return NULL;
+
+    //int data = (intptr_t)_listbox->data(line);
 
     Pair* p = GetPair(data);
     return p;
 }
 
-void load_listbox()
+void load_pairview()
 {
     size_t count = GetPairCount();
-    if (count < 1)
-    {
-        _listbox->add("No candidates found", NULL);
-        //        printf("Empty list\n");
-    }
-
     for (int i = 0; i < count; i++)
     {
-        if (GetPair(i)->valid)
-            _listbox->add(GetPairText(i), GetPairData(i));
+        char *label = GetPairText(i);
+        TreeRowItem* row = _pairview->AddRow(label);
+        row->user_data((void*)GetPairData(i));
     }
-    _listbox->make_visible(1);
-    _listbox->redraw();
+    _pairview->redraw();
+
+    //if (count < 1)
+    //{
+    //    _listbox->add("No candidates found", NULL);
+    //    //        printf("Empty list\n");
+    //}
+
+    //for (int i = 0; i < count; i++)
+    //{
+    //    if (GetPair(i)->valid)
+    //        _listbox->add(GetPairText(i), GetPairData(i));
+    //}
+    //_listbox->make_visible(1);
+    //_listbox->redraw();
 }
 
 void ReloadListbox()
 {
-    _listbox->clear();
-    load_listbox();
+    //_listbox->clear();
+    //_pairview->clear();
+    _pairview->clear_children(_pairview->first());
+    load_pairview();
 }
 
 double getNiceFileSize(const char* path)
@@ -325,19 +345,31 @@ void updateBoxImages()
 
 }
 
+Fl_Tree_Item* _last = NULL;
+
 void onListClick(Fl_Widget* w, void* d)
 {
-    if (_listbox->size() < 1) // list is now empty, done
+    Fl_Tree_Reason why = _pairview->callback_reason();
+    if (why != FL_TREE_REASON_SELECTED)
         return;
 
-    int line = _listbox->value();
-    if (!line)
-        line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
-
-    int data = (intptr_t)_listbox->data(line);
-    size_t max = GetPairCount();
-    if (data >= max)
+    Fl_Tree_Item* who = _pairview->callback_item();
+    if (who == _last)
         return;
+    _last = who;
+    int data = (int)who->user_data();
+
+    //if (_listbox->size() < 1) // list is now empty, done
+    //    return;
+
+    //int line = _listbox->value();
+    //if (!line)
+    //    line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
+
+    //int data = (intptr_t)_listbox->data(line);
+    //size_t max = GetPairCount();
+    //if (data >= max)
+    //    return;
 
     Pair* p = GetPair(data);
     //const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
@@ -352,65 +384,65 @@ void onListClick(Fl_Widget* w, void* d)
     _leftImage = SharedImageExt::LoadImage(pathL);
     _rightImage = SharedImageExt::LoadImage(pathR);
 
-    // _leftImage or _rightImage may be null [file missing]
-    // Force selection of next entry
-    // Force selection of next entry
-    if (!_leftImage || !_rightImage)
-    {
-        p->valid = false;
+    //// _leftImage or _rightImage may be null [file missing]
+    //// Force selection of next entry
+    //// Force selection of next entry
+    //if (!_leftImage || !_rightImage)
+    //{
+    //    p->valid = false;
 
-        // TODO do this w/o recursion!
-        // TODO needs to be done in the viewlist ???
-        _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
-        _listbox->remove(line);
-        _listbox->redraw();
-        onListClick(0, 0); // force onclick
-        return;
-    }
+    //    // TODO do this w/o recursion!
+    //    // TODO needs to be done in the viewlist ???
+    //    _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
+    //    _listbox->remove(line);
+    //    _listbox->redraw();
+    //    onListClick(0, 0); // force onclick
+    //    return;
+    //}
 
     updateTitle(pathL, _leftImage->baseImage(), pathR, _rightImage->baseImage());
     updateBoxImages();
 
-    // ensure the current line is up a little bit - can't click to get to next line sometimes
-    _listbox->bottomline(line + 5);
+    //// ensure the current line is up a little bit - can't click to get to next line sometimes
+    //_listbox->bottomline(line + 5);
 }
 
 void btnDup(bool left)
 {
-    // Common code for the two 'Dup' buttons
-    // rename one of the images as a duplicate of the other
-    // bool left : rename the 'left' image
+    //// Common code for the two 'Dup' buttons
+    //// rename one of the images as a duplicate of the other
+    //// bool left : rename the 'left' image
 
-    Pair* p = GetCurrentPair();
-    if (!p)
-        return;
+    //Pair* p = GetCurrentPair();
+    //if (!p)
+    //    return;
 
-    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
-    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
-    auto target = left ? pathR : pathL;
-    auto source = left ? pathL : pathR;
+    //auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    //auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+    //auto target = left ? pathR : pathL;
+    //auto source = left ? pathL : pathR;
 
-    // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
-    if (MoveFile("%s/dup%d_%s", target, source))
-    {
-        if (_leftImgView->image())
-        {
-            _leftImgView->image()->release();
-            _leftImgView->image(NULL);
-        }
-        if (_rightImgView->image())
-        {
-            _rightImgView->image()->release();
-            _rightImgView->image(NULL);
-        }
+    //// Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
+    //if (MoveFile("%s/dup%d_%s", target, source))
+    //{
+    //    if (_leftImgView->image())
+    //    {
+    //        _leftImgView->image()->release();
+    //        _leftImgView->image(NULL);
+    //    }
+    //    if (_rightImgView->image())
+    //    {
+    //        _rightImgView->image()->release();
+    //        _rightImgView->image(NULL);
+    //    }
 
-        int oldsel = _listbox->value();
-        RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
-        p->valid = false;
-        ReloadListbox();
-        _listbox->select(oldsel);
-        onListClick(0, 0); // force onclick       
-    }
+    //    int oldsel = _listbox->value();
+    //    RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
+    //    p->valid = false;
+    //    ReloadListbox();
+    //    _listbox->select(oldsel);
+    //    onListClick(0, 0); // force onclick       
+    //}
 }
 
 void btnDupL_cb(Fl_Widget* w, void* d)
@@ -434,7 +466,8 @@ void btnView(bool left)
     showView(_leftImage->baseImage(), _rightImage->baseImage(), left);
     //showView(p, left);
 
-    _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
+    //_listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
+    _pairview->take_focus();
 }
 
 void btnViewL_cb(Fl_Widget* w, void* d)
@@ -455,7 +488,8 @@ void btnDiff(bool left, bool stretch)
     showDiff(_leftImage->image(), _rightImage->image(), stretch);
     //showDiff(p, stretch);
 
-    _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
+    //_listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
+    _pairview->take_focus();
 }
 
 void btnDiff_cb(Fl_Widget*, void*)
@@ -470,33 +504,34 @@ void btnDiffS_cb(Fl_Widget*, void*)
 
 void btnNext_cb(Fl_Widget*, void*)
 {
-    if (_listbox->size() < 1) // list is now empty, done
-        return;
+    //if (_listbox->size() < 1) // list is now empty, done
+    //    return;
 
-    int line = _listbox->value();
-    if (!line)
-        line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
-    _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
-    onListClick(0, 0);
+    //int line = _listbox->value();
+    //if (!line)
+    //    line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
+    //_listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
+    //onListClick(0, 0);
 }
 
 void btnPrev_cb(Fl_Widget*, void*)
 {
-    if (_listbox->size() < 1) // list is now empty, done
-        return;
+    //if (_listbox->size() < 1) // list is now empty, done
+    //    return;
 
-    int line = _listbox->value();
-    if (!line)
-        line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
-    _listbox->select(line - 1, 1); // NOTE: does NOT force 'onclick' event
-    onListClick(0, 0);
-
+    //int line = _listbox->value();
+    //if (!line)
+    //    line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
+    //_listbox->select(line - 1, 1); // NOTE: does NOT force 'onclick' event
+    //onListClick(0, 0);
 }
 
 void clear_controls()
 {
     // used on load, Clear menu
-    _listbox->clear();
+    //_listbox->clear();
+    _pairview->clear_children(_pairview->first());
+    //_pairview->clear();
 
     if (_leftImgView->image())
         ((Fl_Shared_Image*)_leftImgView->image())->release();
@@ -527,8 +562,8 @@ void filter_cb(Fl_Widget* w, void* d)
 
     clear_controls();
     FilterAndSort(filterSame);
-    load_listbox();
-    _listbox->select(1);
+    load_pairview();
+    //_listbox->select(1);
     onListClick(0, 0);
 }
 
@@ -637,9 +672,9 @@ int handleSpecial(int event)
         break;
     case KBR_DONE_LOAD:
         _window->label("Ready!");
-        load_listbox();
+        load_pairview();
         // do NOT flush here!
-        _listbox->select(1);
+        //_listbox->select(1);
         onListClick(0, 0);
         Fl::awake();
         break;
@@ -674,18 +709,30 @@ int main(int argc, char** argv)
     _menu->copy(mainmenuItems);
     updateMRU();
 
-    _listbox = new Fl_Hold_Browser(0, 25, window.w(), 250);
-    _listbox->color(FL_BACKGROUND_COLOR, FL_GREEN);
-    _listbox->callback(onListClick);
-    _listbox->column_char('|');
-    _listbox->column_widths(widths); // TODO how to calculate 0-th width to fit "DUP" at selected font and size?
+    _pairview = new TreeWithColumns(0, 25, window.w(), 250);
+    _pairview->selectmode(FL_TREE_SELECT_SINGLE);
+    _pairview->resizing(true);
+    _pairview->column_char('|');
+    _pairview->column_widths(widths);
+    _pairview->AddRow("Blah|Blah|Blah");
+    _pairview->callback(onListClick);
+    _pairview->when(FL_WHEN_RELEASE);
+
+    //_listbox = new Fl_Hold_Browser(0, 25, window.w(), 250);
+    //_listbox->color(FL_BACKGROUND_COLOR, FL_GREEN);
+    //_listbox->callback(onListClick);
+    //_listbox->column_char('|');
+    //_listbox->column_widths(widths); // TODO how to calculate 0-th width to fit "DUP" at selected font and size?
 
     // TODO options to set these
     //Fl_Fontsize blah = _listbox->textsize(); // 14
-    _listbox->textsize(14);
+
+    //_listbox->textsize(14);
+
     //_listbox->textfont(FL_COURIER);
 
-    window.resizable(_listbox);
+    //window.resizable(_listbox);
+    window.resizable(_pairview);
 
 #define BTNBOXY 235
     _btnBox = new Fl_Group(0, BTNBOXY, window.w(), BTN_BOX_HIGH);

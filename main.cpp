@@ -244,7 +244,7 @@ Pair *GetCurrentPair()
     return p;
 }
 
-void load_listbox()
+void load_pairview()
 {
     size_t count = GetPairCount();
     if (count < 1)
@@ -265,7 +265,7 @@ void load_listbox()
 void ReloadListbox()
 {
     _listbox->clear();
-    load_listbox();
+    load_pairview();
 }
 
 double getNiceFileSize(const char *path)
@@ -524,7 +524,7 @@ void filter_cb(Fl_Widget* w, void* d)
 
     clear_controls();
     FilterAndSort(filterSame);
-    load_listbox();
+    load_pairview();
     _listbox->select(1);
     onListClick(0, 0);
 }
@@ -634,7 +634,7 @@ int handleSpecial(int event)
             break;
         case KBR_DONE_LOAD:
             _window->label("Ready!");
-            load_listbox();
+            load_pairview();
             // do NOT flush here!
             _listbox->select(1);
             onListClick(0,0);

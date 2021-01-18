@@ -152,6 +152,7 @@
     <ClInclude Include="..\SharedImageExt.h" />
     <ClInclude Include="..\threads.h" />
     <ClInclude Include="..\ViewWin.h" />
+    <ClInclude Include="FL_Tree_Columns.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Fl_Image_Display.cxx" />
