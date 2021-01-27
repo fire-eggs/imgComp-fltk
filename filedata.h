@@ -74,9 +74,6 @@ public:
     }
 };
 
-void log(const char *fmt, ...);
-void initlog();
-
 void readPhash(char*, int);
 void CompareFiles();
 size_t GetPairCount(); // the number of visible pairs

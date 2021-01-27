@@ -138,6 +138,7 @@
     <ClCompile Include="Webp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="archiveData.h" />
     <ClInclude Include="events.h" />
     <ClInclude Include="filedata.h" />
     <ClInclude Include="Fl_Image_Display.H" />

@@ -9,6 +9,7 @@
 #include <mutex>
 
 #include "logging.h"
+#include "archiveData.h"
 
 const char* ExtractFile(std::string arcpath, std::string filepath);
 
@@ -22,33 +23,6 @@ std::vector<Pair*>* _viewlist;
 static int THRESHOLD = 15; // Hamming distance always a multiple of two
 
 std::mutex _pair_lock;
-
-std::map<std::string, int>* archiveDict;
-std::vector<std::string>* archiveList;
-
-int addArchive(const char* archivePath)
-{
-    if (!archiveDict)
-    {
-        archiveDict = new std::map<std::string, int>();
-        archiveList = new std::vector<std::string>();
-
-    }
-    std::string lookup(archivePath);
-
-    std::map<std::string, int>::iterator it;
-    it = archiveDict->find(lookup);
-    if (it == archiveDict->end())
-    {
-        // archive name not seen before.
-        archiveList->push_back(lookup);
-        int dex = archiveList->size() - 1;
-        (*archiveDict)[lookup] = dex;
-        return dex;
-    }
-    else
-        return it->second;
-}
 
 std::string* replaceStrChar(std::string *str, const std::string& replace, char ch) 
 {
@@ -250,6 +224,7 @@ size_t GetPairCount() // the number of visible pairs
     return _viewlist->size(); 
 }
 
+// TODO should this be std::string?
 char* GetPairText(int who) // the text to display for a specific pair
 {
     char buff[2048];
@@ -263,8 +238,15 @@ char* GetPairText(int who) // the text to display for a specific pair
     FileData* dataL = _data.Get(p->FileLeftDex);
     FileData* dataR = _data.Get(p->FileRightDex);
 
+    std::string archNameL = getArchiveName(dataL->Archive);
+    std::string archNameR = getArchiveName(dataR->Archive);
+
+    strcat(buff, archNameL.c_str());
+    strcat(buff, ":");
     strcat(buff, dataL->Name->c_str());
     strcat(buff, "|");
+    strcat(buff, archNameR.c_str());
+    strcat(buff, ":");
     strcat(buff, dataR->Name->c_str());
 
     char* clone = new char[strlen(buff)+1];
@@ -299,10 +281,13 @@ const char* GetActualPath(Pair* p, bool left)
         return fd->ActualPath->c_str();
 
     // 1. get archive path
-    std::string arcPath = (*archiveList)[fd->Archive];
+    std::string arcPath = getArchivePath(fd->Archive);
 
     // 2. extract file from archive somewhere
     const char* outpath = ExtractFile(arcPath, *fd->Name);
+    if (!outpath)
+        return "";
+
     fd->ActualPath = new std::string(outpath);
 
     // 3. return path to extracted file
@@ -314,10 +299,13 @@ const char* GetActualPath(Pair* p, bool left)
 // C++ compare function : return true if me < other
 int Compare(Pair *me, Pair* other)
 {
+    // greater-than and less-than are obvious
     if (me->Val < other->Val)
         return true;
     if (me->Val > other->Val)
         return false;
+
+    // when Pairs are "equal", cause sort by "left" filename
     if (me->CRCMatch && other->CRCMatch)
         return _data.Get(me->FileLeftDex)->Name <
                _data.Get(other->FileLeftDex)->Name;
@@ -355,7 +343,7 @@ void FilterAndSort(bool filter)
         _viewlist = new std::vector<Pair*>(*_pairlist);
 }
 
-#ifdef MoveFile
+#ifdef MoveFile // WinBase.h
 #undef MoveFile
 #endif
 bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)

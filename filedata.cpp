@@ -373,3 +373,5 @@ const char* GetActualPath(Pair* p, bool left)
     //if (fd->Archive == -1)
     return fd->Name->c_str(); // TODO memory leak?
 }
+
+void compareArchives() {}

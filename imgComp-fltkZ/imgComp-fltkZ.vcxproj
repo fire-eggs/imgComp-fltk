@@ -162,6 +162,7 @@
     <ClCompile Include="..\SharedImageExt.cpp" />
     <ClCompile Include="..\ViewWin.cpp" />
     <ClCompile Include="..\Webp.cpp" />
+    <ClCompile Include="ArchiveData.cpp" />
     <ClCompile Include="Extractor.cpp" />
     <ClCompile Include="filedata.cpp" />
     <ClCompile Include="FL_Tree_Columns.cpp" />

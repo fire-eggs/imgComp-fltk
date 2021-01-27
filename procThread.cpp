@@ -17,6 +17,9 @@
 #include "events.h"
 #include <FL/Fl.H>
 
+#include "logging.h"
+#include "archiveData.h"
+
 extern int sourceId;    // hacky
 extern char* loadfile;  // hacky
 extern bool filterSame; // hacky
@@ -42,6 +45,9 @@ void* proc_func(void *p)
    
     // viewing pairlist may be filtered [no matching sources]
     FilterAndSort(filterSame);
+
+    log("archive");
+    compareArchives(); // Depends on _viewlist!!!
 
     log ("done");
     Fl::handle_(KBR_DONE_LOAD, 0);

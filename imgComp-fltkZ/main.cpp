@@ -400,7 +400,8 @@ void onListClick(Fl_Widget* w, void* d)
     //    return;
     //}
 
-    updateTitle(pathL, _leftImage->baseImage(), pathR, _rightImage->baseImage());
+    if (_leftImage && _rightImage) // TODO shouldn't happen
+        updateTitle(pathL, _leftImage->baseImage(), pathR, _rightImage->baseImage());
     updateBoxImages();
 
     //// ensure the current line is up a little bit - can't click to get to next line sometimes
