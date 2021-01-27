@@ -1,29 +1,44 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include <algorithm>
 
 #include "filedata.h"
+#include "archiveData.h"
 
 // archive-path to archive index
-std::map<std::string, int>* archiveDict;
+std::map<std::string, int>* archiveDict = NULL;
 // list of archive paths
 std::vector<std::string>* archiveList;
+// list of archive file counts
+std::vector<int>* countList;
 
 // <archive-index-pair> to <filePairlist>
 typedef std::map < std::pair<int, int>, std::vector<Pair*>*> ArchMapType;
-ArchMapType* _archList;
+ArchMapType* _archList = NULL;
 
-// Add a new archive file to the archive list
+void clearArchiveData()
+{
+    delete archiveDict;
+    delete archiveList;
+    delete countList;
+    delete _archList;
+    archiveDict = NULL;
+    _archList = NULL;
+}
+
+// Add a new archive file to the archive list. Also tracks the number
+// of image files associated to that archive [as this function is 
+// called once per file].
 int addArchive(const char* archivePath)
 {
     // TODO should be std::string arg for unicode filenames?
-    // TODO would like to keep track of file count associated to archive
-
+ 
     if (!archiveDict)
     {
         archiveDict = new std::map<std::string, int>();
         archiveList = new std::vector<std::string>();
-
+        countList = new std::vector<int>();
     }
     std::string lookup(archivePath);
 
@@ -36,10 +51,22 @@ int addArchive(const char* archivePath)
         archiveList->push_back(lookup);
         int dex = archiveList->size() - 1;
         (*archiveDict)[lookup] = dex;
+        countList->push_back(1); // first image
         return dex;
     }
     else
+    {
+        int dex = it->second;
+        (*countList)[dex]++;
         return it->second;
+    }
+}
+
+int getArchiveFileCount(int archiveId)
+{
+    if (archiveId < 0)
+        return 0;
+    return (*countList)[archiveId];
 }
 
 // The archive path.
@@ -103,4 +130,45 @@ void compareArchives()
         }
         res.first->second->push_back(p);
     }
+
+    sortArchives(); // TODO call via proc_thread instead?
+}
+
+struct ArchPair
+{
+    int score; // percentage match
+    int ArchId1;
+    int ArchId2;
+    std::vector<Pair*>* files;
+};
+std::vector<ArchPair*>* _archPairList = NULL;
+
+// C++ compare function : return true if me > other FOR REVERSE SORT
+int apCompare(ArchPair* me, ArchPair* other)
+{
+    return me->score > other->score;
+}
+
+void sortArchives()
+{
+    if (_archPairList)
+        delete _archPairList;
+    _archPairList = new std::vector<ArchPair*>();
+
+    for (ArchMapType::iterator i = _archList->begin(); i != _archList->end(); i++)
+    {
+        ArchPair* p = new ArchPair();
+        p->ArchId1 = i->first.first;
+        p->ArchId2 = i->first.second;
+        p->files = i->second;
+
+        float fcount = p->files->size();
+        int a1 = getArchiveFileCount(p->ArchId1);
+        int a2 = getArchiveFileCount(p->ArchId2);
+        p->score = (int)((fcount / a1 + fcount / a2) * 50.0f); // percentage
+
+        _archPairList->push_back(p);
+    }
+
+    std::sort(_archPairList->begin(), _archPairList->end(), apCompare);
 }

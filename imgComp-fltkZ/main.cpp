@@ -9,6 +9,7 @@
 
 #include "Fl_Image_Display.H"
 #include "filedata.h"
+#include "archiveData.h"
 #include "ViewWin.h"
 #include "prefs.h"
 #include "MostRecentPaths.h"
@@ -553,6 +554,7 @@ void clear_cb(Fl_Widget* w, void* d)
     clear_controls();
     ClearPairList();
     ClearData();
+    clearArchiveData();
 
     _window->label("");
 }
