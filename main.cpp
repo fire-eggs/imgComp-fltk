@@ -262,7 +262,7 @@ void load_pairview()
     _listbox->redraw();
 }
 
-void ReloadListbox()
+void ReloadPairview()
 {
     _listbox->clear();
     load_pairview();
@@ -404,7 +404,7 @@ void btnDup(bool left)
         int oldsel = _listbox->value();
         RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
 		p->valid = false;
-        ReloadListbox();
+        ReloadPairview();
         _listbox->select(oldsel);
         onListClick(0, 0); // force onclick       
     }

@@ -238,7 +238,7 @@ void updateMRU()
     _window->do_menu();
 }
 
-Pair* GetCurrentPair()
+ArchPair* getCurrentArchivePair()
 {
     Fl_Tree_Item* sel = _pairview->first_selected_item();
     if (!sel)
@@ -253,19 +253,36 @@ Pair* GetCurrentPair()
 
     //int data = (intptr_t)_listbox->data(line);
 
-    Pair* p = GetPair(data);
-    return p;
+    ArchPair* p2 = getArchPair(data);
+    return p2;
+}
+
+Pair* getCurrentPair()
+{
+    ArchPair* p2 = getCurrentArchivePair();
+    if (!p2)
+        return NULL;
+    return p2->files->at(0); // TODO temp hack: return first file pair
 }
 
 void load_pairview()
 {
-    size_t count = GetPairCount();
+    size_t count = getArchPairCount();
     for (int i = 0; i < count; i++)
     {
-        char *label = GetPairText(i);
+        char* label = getArchPairText(i);
         TreeRowItem* row = _pairview->AddRow(label);
-        row->user_data((void*)GetPairData(i));
+        row->user_data(getArchPairData(i));
     }
+
+    // TODO these need to be children of tree rows
+    //size_t count = GetPairCount();
+    //for (int i = 0; i < count; i++)
+    //{
+    //    char *label = GetPairText(i);
+    //    TreeRowItem* row = _pairview->AddRow(label);  // TODO is this a copy or the object? need to delete at the appropriate time
+    //    row->user_data((void*)GetPairData(i));
+    //}
     _pairview->redraw();
 
     //if (count < 1)
@@ -283,7 +300,7 @@ void load_pairview()
     //_listbox->redraw();
 }
 
-void ReloadListbox()
+void ReloadPairview()
 {
     //_listbox->clear();
     //_pairview->clear();
@@ -372,7 +389,11 @@ void onListClick(Fl_Widget* w, void* d)
     //if (data >= max)
     //    return;
 
-    Pair* p = GetPair(data);
+    // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
+    ArchPair* p2 = getArchPair(data);
+    Pair* p = p2->files->at(0);
+    //Pair* p = GetPair(data);
+
     //const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
     //const char* pathR = GetFD(p->FileRightDex)->Name->c_str();
     const char* pathL = GetActualPath(p, true);
@@ -462,7 +483,7 @@ void btnView(bool left)
     // activate the view window with the plain images.
     // bool left: start with the 'left' image
 
-    Pair* p = GetCurrentPair();
+    Pair* p = getCurrentPair();
     if (!p)
         return;
     showView(_leftImage->baseImage(), _rightImage->baseImage(), left);
@@ -484,7 +505,7 @@ void btnViewR_cb(Fl_Widget* w, void* d)
 
 void btnDiff(bool left, bool stretch)
 {
-    Pair* p = GetCurrentPair();
+    Pair* p = getCurrentPair();
     if (!p)
         return;
     showDiff(_leftImage->image(), _rightImage->image(), stretch);
@@ -640,21 +661,40 @@ void viewLog_cb(Fl_Widget*, void*)
 
 void copyToClip_cb(Fl_Widget*, void*)
 {
-    Pair* p = GetCurrentPair();
-    if (!p)
+    // TODO archive row versus image row
+
+    ArchPair* p2 = getCurrentArchivePair();
+    if (!p2)
         return;
 
-    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
-    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+    std::string a1 = getArchivePath(p2->archId1);
+    std::string a2 = getArchivePath(p2->archId2);
 
-    int size = strlen(pathL) + strlen(pathR) + 3;
+    int size = a1.length() + a2.length() + 3;
     char* buff = (char*)malloc(size);
     if (buff)
     {
-        sprintf(buff, "%s\n%s", pathL, pathR);
+        sprintf(buff, "%s\n%s", a1.c_str(), a2.c_str());
         Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
         free(buff);
     }
+
+    // TODO file pair names need archive names as well?
+    //Pair* p = getCurrentPair();
+    //if (!p)
+    //    return;
+
+    //auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    //auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+
+    //int size = strlen(pathL) + strlen(pathR) + 3;
+    //char* buff = (char*)malloc(size);
+    //if (buff)
+    //{
+    //    sprintf(buff, "%s\n%s", pathL, pathR);
+    //    Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
+    //    free(buff);
+    //}
 }
 
 int handleSpecial(int event)

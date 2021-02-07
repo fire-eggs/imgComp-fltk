@@ -116,6 +116,9 @@ void compareArchives()
             rigt->Archive < 0)
             continue; // at least one file not in an archive
 
+        if (left->Archive == rigt->Archive)
+            continue; // Do not include self-archive matches
+
         // a tuple of archive ids
         std::pair<int,int> archPair;
         archPair.first = left->Archive;
@@ -134,13 +137,6 @@ void compareArchives()
     sortArchives(); // TODO call via proc_thread instead?
 }
 
-struct ArchPair
-{
-    int score; // percentage match
-    int ArchId1;
-    int ArchId2;
-    std::vector<Pair*>* files;
-};
 std::vector<ArchPair*>* _archPairList = NULL;
 
 // C++ compare function : return true if me > other FOR REVERSE SORT
@@ -158,17 +154,54 @@ void sortArchives()
     for (ArchMapType::iterator i = _archList->begin(); i != _archList->end(); i++)
     {
         ArchPair* p = new ArchPair();
-        p->ArchId1 = i->first.first;
-        p->ArchId2 = i->first.second;
+        p->archId1 = i->first.first;
+        p->archId2 = i->first.second;
         p->files = i->second;
 
         float fcount = p->files->size();
-        int a1 = getArchiveFileCount(p->ArchId1);
-        int a2 = getArchiveFileCount(p->ArchId2);
+        int a1 = getArchiveFileCount(p->archId1);
+        int a2 = getArchiveFileCount(p->archId2);
         p->score = (int)((fcount / a1 + fcount / a2) * 50.0f); // percentage
 
         _archPairList->push_back(p);
     }
 
     std::sort(_archPairList->begin(), _archPairList->end(), apCompare);
+}
+
+size_t getArchPairCount()
+{
+    return _archPairList->size(); // static_cast<int>(_archPairList->size());
+}
+
+char* getArchPairText(int who)
+{
+    char buff[2048];
+    buff[0] = '\0';
+
+    ArchPair* p = _archPairList->at(who);
+    sprintf(buff, "%03d | ", p->score);
+
+    std::string archNameL = getArchiveName(p->archId1);
+    std::string archNameR = getArchiveName(p->archId2);
+
+    strcat(buff, archNameL.c_str());
+    strcat(buff, "|");
+    strcat(buff, archNameR.c_str());
+
+    char* clone = new char[strlen(buff) + 1]; // TODO memory leak
+    strcpy(clone, buff);
+    return clone;
+}
+
+void* getArchPairData(int who)
+{
+    return (ArchPair*)(intptr_t)who;
+}
+
+ArchPair* getArchPair(int who)
+{
+    if (who < 0 || who > _archPairList->size())
+        return NULL;
+    return _archPairList->at(who);
 }

@@ -249,7 +249,7 @@ char* GetPairText(int who) // the text to display for a specific pair
     strcat(buff, ":");
     strcat(buff, dataR->Name->c_str());
 
-    char* clone = new char[strlen(buff)+1]; // TODO memory leak?
+    char* clone = new char[strlen(buff)+1]; // TODO memory leak
     strcpy(clone, buff);
     return clone;
 }
