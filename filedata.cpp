@@ -375,3 +375,6 @@ const char* GetActualPath(Pair* p, bool left)
 }
 
 void compareArchives() {}
+void pixVsArchives() {}
+
+bool checkAnyStandalone() { return true; }

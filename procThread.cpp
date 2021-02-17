@@ -46,8 +46,16 @@ void* proc_func(void *p)
     // viewing pairlist may be filtered [no matching sources]
     FilterAndSort(filterSame);
 
-    log("archive");
-    compareArchives(); // Depends on _viewlist!!!
+    bool anyStandalone = checkAnyStandalone();
+    if (!anyStandalone)
+    {
+        log("archive");
+        compareArchives(); // Depends on _viewlist!!!
+    }
+    else
+    {
+        pixVsArchives();
+    }
 
     log ("done");
     Fl::handle_(KBR_DONE_LOAD, 0);

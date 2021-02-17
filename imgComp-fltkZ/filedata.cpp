@@ -38,10 +38,80 @@ std::string* replaceStrChar(std::string *str, const std::string& replace, char c
   return str; // return our new string.
 }
 
-//const char * gMount = "/run/user/1000/gvfs/smb-share:domain=troll,server=troll,share=g,user=kevin/";
-//const char * yMount = "/run/user/1000/gvfs/smb-share:domain=192.168.111.157,server=192.168.111.157,share=sambashare,user=guest/";
+void readPhashC(char* filename, int sourceId)
+{
+    FILE* fptr = fl_fopen(filename, "r");
+    if (!fptr)
+        return; // TODO remove from MRU list (?)
+    char buffer[2048];
+    int limit = LIMIT;
+    bool firstLine = true;
+    int is_animated = false;
+    while (fgets(buffer, 2048, fptr))
+    {
+        if (firstLine)
+        {
+            firstLine = false;
+            continue;
+        }
 
-void readPhash(char* filename, int sourceId)
+        if (!buffer[0])
+            continue;
+
+        // Lines of the form <hash>|<crc>|<animated>|<filepath>
+
+        char* parts = strtok(buffer, "|");
+        if (!parts) // unexpected data
+            continue;
+
+        unsigned long long phash = strtoull(parts, NULL, 10);
+        if (phash == 0ULL)
+            continue; // unexpected data: assuming hash cannot be zero
+
+        parts = strtok(NULL, "|");
+        if (!parts) // unexpected data
+            continue;
+
+        unsigned long crc = strtoul(parts, NULL, 10);
+        if (crc == 0ULL)
+            continue; // unexpected data: assuming CRC cannot be zero
+
+        parts = strtok(NULL, "|");
+        if (!parts) // unexpected data
+            continue;
+
+        if (strlen(parts) == 1)  // phash-fltk
+        {
+            is_animated = parts[0] == '1';
+
+            parts = strtok(NULL, "|");
+            if (!parts) // unexpected data
+                continue;
+        }
+
+        parts[strlen(parts) - 1] = '\0'; //kill trailing newline
+        FileData* fd = new FileData();
+        fd->Name = new std::string(parts);
+
+        fd->CRC = crc;
+        fd->PHash = phash;
+        fd->Source = sourceId;
+        fd->Vals = NULL;
+        fd->FVals = NULL;
+        fd->Animated = is_animated;
+        fd->Archive = -1;
+        fd->ActualPath = NULL;
+
+        _data.Add(fd);
+
+        limit--;
+        if (limit < 0)
+            break;
+    }
+    fclose(fptr);
+}
+
+void readPhashZ(char* filename, int sourceId)
 {
     // TODO need general mechanism to xlate Windows drive letters!
 
@@ -96,35 +166,6 @@ void readPhash(char* filename, int sourceId)
         FileData* fd = new FileData();
         fd->Name = new std::string(parts);
         
-        // TODO assuming the .phashc files are in Windows format
-#ifndef _WIN32
-        // None of this magic is necessary if a symbolic link is created in the
-        // program's working folder:
-        //
-        // ln -s '/run/user/1000/gvfs/smb-share:domain=troll,server=troll,share=g,user=kevin' g:
-        //
-        // NOTE the case must match that used in the .phashc file
-        //
-#ifdef TEST        
-        size_t dex = fd->Name->find("g:\\");
-        if (dex != std::string::npos)
-        {
-            fd->Name->replace(dex,3, gMount);
-        }
-        else
-        {
-            size_t dex = fd->Name->find("y:\\");
-            if (dex != std::string::npos)
-            {
-                fd->Name->replace(dex,3, yMount);
-            }
-        }
-#endif
-        // translate any windows paths to unix [slashes and trailing carriage-return
-        replaceStrChar(fd->Name, "\\", '/');
-        fd->Name->erase(remove(fd->Name->begin(), fd->Name->end(), '\r'), fd->Name->end());
-#endif
-
         fd->CRC = crc;
         fd->PHash = phash;
         fd->Source = sourceId;
@@ -141,6 +182,28 @@ void readPhash(char* filename, int sourceId)
             break;
     }
     fclose(fptr);
+}
+
+bool str_ends_with(const char* str, const char* suffix) {
+
+    if (str == NULL || suffix == NULL)
+        return false;
+
+    size_t str_len = strlen(str);
+    size_t suffix_len = strlen(suffix);
+
+    if (suffix_len > str_len)
+        return false;
+
+    return 0 == strncmp(str + str_len - suffix_len, suffix, suffix_len);
+}
+
+void readPhash(char* filename, int sourceId)
+{
+    if (str_ends_with(filename, "phashcz"))
+        readPhashZ(filename, sourceId);
+    if (str_ends_with(filename, "phashc"))
+        readPhashC(filename, sourceId);
 }
 
 void ClearPairList()
@@ -181,9 +244,8 @@ void CompareOneFile(int me)
 {
     FileData* my = _data.Get(me);
     size_t count = _data.Count();
-#if 0
+
 #pragma omp parallel for
-#endif
     for (int j = me + 1; j < count; j++)
     {
         FileData* they = _data.Get(j);
@@ -215,6 +277,14 @@ void CompareFiles()
     ClearPairList();
     for (int i = 0; i < _data.Count(); i++)
         CompareOneFile(i);
+}
+
+bool checkAnyStandalone()
+{
+    for (int i = 0; i < _data.Count(); i++)
+        if (_data.Get(i)->Archive == -1)
+            return true;
+    return false;
 }
 
 size_t GetPairCount() // the number of visible pairs

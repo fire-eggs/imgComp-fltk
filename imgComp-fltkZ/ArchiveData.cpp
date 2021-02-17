@@ -17,14 +17,19 @@ std::vector<int>* countList;
 typedef std::map < std::pair<int, int>, std::vector<Pair*>*> ArchMapType;
 ArchMapType* _archList = NULL;
 
+std::vector<ArchPair*>* _archPairList = NULL;
+
 void clearArchiveData()
 {
-    delete archiveDict;
+    if (archiveDict)
+        delete archiveDict;
     delete archiveList;
     delete countList;
     delete _archList;
+    delete _archPairList;
     archiveDict = NULL;
     _archList = NULL;
+    _archPairList = NULL;
 }
 
 // Add a new archive file to the archive list. Also tracks the number
@@ -49,7 +54,7 @@ int addArchive(const char* archivePath)
     {
         // archive name not seen before.
         archiveList->push_back(lookup);
-        int dex = archiveList->size() - 1;
+        int dex = static_cast<int>(archiveList->size() - 1);
         (*archiveDict)[lookup] = dex;
         countList->push_back(1); // first image
         return dex;
@@ -137,12 +142,16 @@ void compareArchives()
     sortArchives(); // TODO call via proc_thread instead?
 }
 
-std::vector<ArchPair*>* _archPairList = NULL;
-
-// C++ compare function : return true if me > other FOR REVERSE SORT
+// C++ compare function : return true if me > other for HIGH->LOW sort
 int apCompare(ArchPair* me, ArchPair* other)
 {
     return me->score > other->score;
+}
+
+// C++ compare function : return true if me < other for LOW->HIGH sort
+int apCompareR(ArchPair* me, ArchPair* other)
+{
+    return me->score < other->score;
 }
 
 void sortArchives()
@@ -158,6 +167,7 @@ void sortArchives()
         p->archId2 = i->first.second;
         p->files = i->second;
 
+        // TODO Need better score. If (e.g.) the left archive is fully contained in the right archive, the left is 100%!
         float fcount = p->files->size();
         int a1 = getArchiveFileCount(p->archId1);
         int a2 = getArchiveFileCount(p->archId2);
@@ -169,8 +179,43 @@ void sortArchives()
     std::sort(_archPairList->begin(), _archPairList->end(), apCompare);
 }
 
+void pixVsArchives()
+{
+    // transform the file-pair-list into an _archPairList.
+
+    if (_archPairList)
+        delete _archPairList;
+    _archPairList = new std::vector<ArchPair*>();
+
+    if (!GetPairCount())
+        return; // nothing to do
+
+    for (int i = 0; i < GetPairCount(); i++)
+    {
+        Pair* p = GetPair(i);
+        FileData* left = GetFD(p->FileLeftDex);
+        FileData* rigt = GetFD(p->FileRightDex);
+
+        if (left->Archive == rigt->Archive && left->Archive != -1)
+            continue; // Do not include self-archive matches
+
+        ArchPair* ap = new ArchPair();
+        ap->archId1 = left->Archive;
+        ap->archId2 = rigt->Archive;
+        ap->score = p->Val;
+        ap->files = new std::vector<Pair*>();
+        ap->files->push_back(p);
+
+        _archPairList->push_back(ap);
+    }
+
+    std::sort(_archPairList->begin(), _archPairList->end(), apCompareR);
+}
+
 size_t getArchPairCount()
 {
+    if (!_archPairList)
+        return 0;
     return _archPairList->size(); // static_cast<int>(_archPairList->size());
 }
 

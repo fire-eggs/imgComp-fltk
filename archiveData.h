@@ -10,6 +10,7 @@ int addArchive(const char* archivePath);
 
 void compareArchives();
 void sortArchives();
+void pixVsArchives();
 
 void clearArchiveData();
 

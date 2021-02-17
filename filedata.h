@@ -91,3 +91,5 @@ bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath);
 void RemoveMissingFile(int filedex);
 
 const char* GetActualPath(Pair* p, bool left);
+
+bool checkAnyStandalone();

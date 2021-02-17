@@ -436,28 +436,36 @@ void btnDup(bool left)
     //// rename one of the images as a duplicate of the other
     //// bool left : rename the 'left' image
 
-    //Pair* p = GetCurrentPair();
-    //if (!p)
-    //    return;
+    ArchPair* p2 = getCurrentArchivePair();
+    if (!p2)
+        return;
 
-    //auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
-    //auto pathR = GetFD(p->FileRightDex)->Name->c_str();
-    //auto target = left ? pathR : pathL;
-    //auto source = left ? pathL : pathR;
+    // Can't 'dup' a file in an archive
+    if (left && p2->archId1 != -1)
+        return;
+    if (!left && p2->archId2 != -1)
+        return;
 
-    //// Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
-    //if (MoveFile("%s/dup%d_%s", target, source))
-    //{
-    //    if (_leftImgView->image())
-    //    {
-    //        _leftImgView->image()->release();
-    //        _leftImgView->image(NULL);
-    //    }
-    //    if (_rightImgView->image())
-    //    {
-    //        _rightImgView->image()->release();
-    //        _rightImgView->image(NULL);
-    //    }
+    Pair *p = p2->files->at(0); // TODO temp hack: return first file pair
+
+    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+    auto target = left ? pathR : pathL;
+    auto source = left ? pathL : pathR;
+
+    // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
+    if (MoveFile("%s/dup%d_%s", target, source))
+    {
+        if (_leftImgView->image())
+        {
+            _leftImgView->image()->release();
+            _leftImgView->image(NULL);
+        }
+        if (_rightImgView->image())
+        {
+            _rightImgView->image()->release();
+            _rightImgView->image(NULL);
+        }
 
     //    int oldsel = _listbox->value();
     //    RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
@@ -465,7 +473,7 @@ void btnDup(bool left)
     //    ReloadListbox();
     //    _listbox->select(oldsel);
     //    onListClick(0, 0); // force onclick       
-    //}
+    }
 }
 
 void btnDupL_cb(Fl_Widget* w, void* d)
@@ -486,11 +494,11 @@ void btnView(bool left)
     Pair* p = getCurrentPair();
     if (!p)
         return;
-    showView(_leftImage->baseImage(), _rightImage->baseImage(), left);
-    //showView(p, left);
+    Fl_Image* leftI = _leftImage ? _leftImage->baseImage() : NULL;
+    Fl_Image* rightI = _rightImage ? _rightImage->baseImage() : NULL;
+    showView(leftI, rightI, left);
 
-    //_listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
-    _pairview->take_focus();
+    _pairview->take_focus(); // so user doesn't lose their place: focus back to list
 }
 
 void btnViewL_cb(Fl_Widget* w, void* d)
@@ -628,7 +636,7 @@ static void popup(Fl_File_Chooser* filechooser)
 void load_cb(Fl_Widget*, void*)
 {
     char filename[1024] = "";
-    Fl_File_Chooser* choose = new Fl_File_Chooser(filename, "*.phashcz", 0, "Open phash file");
+    Fl_File_Chooser* choose = new Fl_File_Chooser(filename, "PHASH (*.{phashc,phashcz})\tAll (*.*)", 0, "Open phash file");
     choose->preview(false); // force preview off
     popup(choose);
     loadfile = (char*)choose->value();
@@ -661,14 +669,35 @@ void viewLog_cb(Fl_Widget*, void*)
 
 void copyToClip_cb(Fl_Widget*, void*)
 {
-    // TODO archive row versus image row
-
-    ArchPair* p2 = getCurrentArchivePair();
-    if (!p2)
+    ArchPair* zipPair = getCurrentArchivePair();
+    if (!zipPair)
         return;
+    Pair* p = zipPair->files->at(0);
 
-    std::string a1 = getArchivePath(p2->archId1);
-    std::string a2 = getArchivePath(p2->archId2);
+    std::string a1;
+    std::string a2;
+
+    // TODO refactor to common code
+    if (zipPair->archId1 != -1 &&
+        zipPair->archId2 != -1)
+    {
+        // both archives, only get the archive paths
+        a1 = getArchivePath(zipPair->archId1);
+        a2 = getArchivePath(zipPair->archId2);
+    }
+    else
+    {
+        // one or both are files, want to get the filepath within the archive
+        if (zipPair->archId1 != -1)
+            a1 = getArchivePath(zipPair->archId1) + ":" + *GetFD(p->FileLeftDex)->Name;
+        else
+            a1 = *GetFD(p->FileLeftDex)->Name;
+
+        if (zipPair->archId2 != -1)
+            a2 = getArchivePath(zipPair->archId2) + ":" + *GetFD(p->FileRightDex)->Name;
+        else
+            a2 = *GetFD(p->FileRightDex)->Name;
+    }
 
     int size = a1.length() + a2.length() + 3;
     char* buff = (char*)malloc(size);
@@ -678,23 +707,6 @@ void copyToClip_cb(Fl_Widget*, void*)
         Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
         free(buff);
     }
-
-    // TODO file pair names need archive names as well?
-    //Pair* p = getCurrentPair();
-    //if (!p)
-    //    return;
-
-    //auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
-    //auto pathR = GetFD(p->FileRightDex)->Name->c_str();
-
-    //int size = strlen(pathL) + strlen(pathR) + 3;
-    //char* buff = (char*)malloc(size);
-    //if (buff)
-    //{
-    //    sprintf(buff, "%s\n%s", pathL, pathR);
-    //    Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
-    //    free(buff);
-    //}
 }
 
 int handleSpecial(int event)
