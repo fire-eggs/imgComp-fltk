@@ -59,7 +59,7 @@ extern char* _logpath; // hacky
 SharedImageExt* _leftImage;
 SharedImageExt* _rightImage;
 
-int widths[] = { 40, 340, 340, 0 };
+int widths[] = { 60, 340, 340, 0 };
 
 // NOTE: relying on toggle menus auto initialized to OFF
 

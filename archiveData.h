@@ -22,6 +22,8 @@ struct ArchPair
     int archId2; // the id of the "right" archive in the archive list
     std::vector<Pair*>* files;  // file pairs matching between the archives
 
+    int scoreL;
+    int scoreR;
     // NOTE: does not include those files that don't match
 };
 

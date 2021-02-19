@@ -168,10 +168,13 @@ void sortArchives()
         p->files = i->second;
 
         // TODO Need better score. If (e.g.) the left archive is fully contained in the right archive, the left is 100%!
-        float fcount = p->files->size();
+        float fcount = (float)p->files->size();
         int a1 = getArchiveFileCount(p->archId1);
         int a2 = getArchiveFileCount(p->archId2);
         p->score = (int)((fcount / a1 + fcount / a2) * 50.0f); // percentage
+
+        p->scoreL = (int)(fcount / a1 * 100.0f); // # of files from left archive which are in matching, as percent
+        p->scoreR = (int)(fcount / a2 * 100.0f); // # of files from right archive which are in matching, as percent
 
         _archPairList->push_back(p);
     }
@@ -225,7 +228,10 @@ char* getArchPairText(int who)
     buff[0] = '\0';
 
     ArchPair* p = _archPairList->at(who);
-    sprintf(buff, "%03d | ", p->score);
+    if (p->archId1 == -1 || p->archId2 == -1)
+        sprintf(buff, "%03d | ", p->score);
+    else
+        sprintf(buff, "%03d%%:%03d%% | ", p->scoreL, p->scoreR);
 
     std::string archNameL = getArchiveName(p->archId1);
     std::string archNameR = getArchiveName(p->archId2);
