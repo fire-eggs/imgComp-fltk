@@ -124,10 +124,26 @@ void compareArchives()
         if (left->Archive == rigt->Archive)
             continue; // Do not include self-archive matches
 
-        // a tuple of archive ids
+        // TODO issue: file pairs are both (A,B) and (B,A). these need to be merged.
+
+        // a tuple of archive ids: (A,B)
         std::pair<int,int> archPair;
         archPair.first = left->Archive;
         archPair.second = rigt->Archive;
+
+        ArchMapType::iterator it = _archList->find(archPair);
+        if (it == _archList->end())
+        {
+            // Didn't find in the map using (A,B), try (B,A)
+            std::pair<int, int> archPair2;
+            archPair.first = rigt->Archive;
+            archPair.second = left->Archive;
+
+            // If found using (B,A), use that as the key for emplace
+            it = _archList->find(archPair2);
+            if (it != _archList->end())
+                archPair = archPair2;
+        }
 
         // accumulate into a map of <archivepair> -> <list of file pairs>
         std::pair<ArchMapType::iterator, bool> res =
