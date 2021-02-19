@@ -343,7 +343,14 @@ void updateTitle(const char* pathL, Fl_Image* imgL, const char* pathR, Fl_Image*
 void updateBoxImages()
 {
     if (!_leftImage || !_rightImage)
+    {
+        // TODO display an existing image?
+        _leftImgView->image(NULL);
+        _rightImgView->image(NULL);
+        _leftImgView->redraw();
+        _rightImgView->redraw();
         return;
+    }
 
     // TODO size images proportionally to view size
     // both images exist
