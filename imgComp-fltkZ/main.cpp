@@ -272,6 +272,7 @@ void load_pairview()
     {
         char* label = getArchPairText(i);
         TreeRowItem* row = _pairview->AddRow(label);
+        delete label; // OK?
         row->user_data(getArchPairData(i));
     }
 
@@ -374,9 +375,10 @@ Fl_Tree_Item* _last = NULL;
 
 void onListClick(Fl_Widget* w, void* d)
 {
-    Fl_Tree_Reason why = _pairview->callback_reason();
-    if (why != FL_TREE_REASON_SELECTED)
-        return;
+    // TODO prevents initial draw from "Done" logic
+    //Fl_Tree_Reason why = _pairview->callback_reason();
+    //if (why != FL_TREE_REASON_SELECTED)
+    //    return;
 
     Fl_Tree_Item* who = _pairview->callback_item();
     if (who == _last)
