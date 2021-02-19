@@ -252,6 +252,15 @@ char* getArchPairText(int who)
     std::string archNameL = getArchiveName(p->archId1);
     std::string archNameR = getArchiveName(p->archId2);
 
+    // TODO entry on the left might be an image
+    // TODO common code: see copyToClip_cb
+    if (p->archId2 == -1)
+    {
+        archNameL = archNameL + ":" + *GetFD(p->files->at(0)->FileLeftDex)->Name;
+
+        archNameR = *GetFD(p->files->at(0)->FileRightDex)->Name;
+    }
+
     strcat(buff, archNameL.c_str());
     strcat(buff, "|");
     strcat(buff, archNameR.c_str());
