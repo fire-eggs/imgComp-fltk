@@ -12,7 +12,7 @@ FileSet _data;
 std::vector<Pair*>* _pairlist;
 std::vector<Pair*>* _viewlist;
 
-#define LIMIT 50000
+#define LIMIT 50000000
 
 std::string* replaceStrChar(std::string *str, const std::string& replace, char ch) 
 {
