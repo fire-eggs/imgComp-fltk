@@ -29,6 +29,7 @@ void lockL_cb(Fl_Widget*, void*);
 void lockR_cb(Fl_Widget*, void*);
 void viewLog_cb(Fl_Widget*, void*);
 void copyToClip_cb(Fl_Widget*, void*);
+void copyBulk_cb(Fl_Widget*, void*);
 void clear_controls();
 void updateBoxImages();
 void onListClick(Fl_Widget* w, void* d);
@@ -189,6 +190,7 @@ Fl_Menu_Item mainmenuItems[] =
     {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE},
     {"View log file ...", 0, viewLog_cb, 0},
     {"Copy filenames to clipboard", 0, copyToClip_cb, 0},
+    {"Copy all data to clipboard", 0, copyBulk_cb, 0},
     {0},
 
     {0}
@@ -614,6 +616,34 @@ void copyToClip_cb(Fl_Widget*, void*)
         Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
         free(buff);
     }
+}
+
+void copyBulk_cb(Fl_Widget*, void*)
+{
+    int count = GetPairCount();
+    int len = 0;
+    for (int i = 0; i < count; i++)
+    {
+        char* txt = GetPairText(i);
+        len += strlen(txt);
+        delete txt;
+    }
+    int size = len + 3 + count;  // extra newline per line
+    char* buff = (char*)malloc(size);
+    if (!buff)
+        return;
+    buff[0] = '\0';
+    for (int i = 0; i < count; i++)
+    {
+        char* txt = GetPairText(i);
+        strcat(buff, txt);
+        strcat(buff, "\n");
+        delete txt;
+    }
+
+    Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
+    free(buff);
+
 }
 
 int handleSpecial(int event)
