@@ -274,6 +274,18 @@ void load_pairview()
         TreeRowItem* row = _pairview->AddRow(label);
         delete label; // OK?
         row->user_data(getArchPairData(i));
+
+        ArchPair* arcP = getArchPair(i);
+        for (int j = 0; j < arcP->files->size(); j++)
+        {
+            char buff[2048];
+            Pair* p = arcP->files->at(j);
+            sprintf(buff, "%03d | %s | %s", p->Val,
+                GetFD(p->FileLeftDex)->Name->c_str(),
+                GetFD(p->FileRightDex)->Name->c_str());
+            TreeRowItem *crow= _pairview->AddRow(buff, row);
+            crow->user_data((void *)j);
+        }
     }
 
     // TODO these need to be children of tree rows
@@ -398,10 +410,21 @@ void onListClick(Fl_Widget* w, void* d)
     //if (data >= max)
     //    return;
 
-    // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
-    ArchPair* p2 = getArchPair(data);
-    Pair* p = p2->files->at(0);
-    //Pair* p = GetPair(data);
+    ArchPair* p2;
+    Pair* p;
+    if (who->has_children())
+    {
+        // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
+        p2 = getArchPair(data);
+        p = p2->files->at(0);
+        //Pair* p = GetPair(data);
+    }
+    else
+    {
+        int dad = (int)who->parent()->user_data();
+        p2 = getArchPair(dad);
+        p = p2->files->at(data);
+    }
 
     //const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
     //const char* pathR = GetFD(p->FileRightDex)->Name->c_str();
