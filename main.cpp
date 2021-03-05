@@ -258,15 +258,19 @@ void load_pairview()
     for (int i = 0; i < count; i++)
     {
         if (GetPair(i)->valid)
-            _listbox->add(GetPairText(i), GetPairData(i));
+        {
+            char* txt = GetPairText(i);
+            _listbox->add(txt, GetPairData(i));
+            delete txt;
+        }
     }
     _listbox->make_visible(1);
     _listbox->redraw();
 }
 
-void ReloadPairview()
+void reloadPairview()
 {
-    _listbox->clear();
+    _listbox->clear(); // TODO is a full rebuild necessary?
     load_pairview();
 }
 
@@ -322,7 +326,6 @@ void updateBoxImages()
 
     _leftImgView->redraw();
     _rightImgView->redraw();
-
 }
 
 void onListClick(Fl_Widget* w, void* d)
@@ -384,6 +387,8 @@ void btnDup(bool left)
     if (!p)
         return;
     
+    //__debugbreak();
+
     auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
     auto pathR = GetFD(p->FileRightDex)->Name->c_str();
     auto target = left ? pathR : pathL;
@@ -392,23 +397,13 @@ void btnDup(bool left)
     // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
     if (MoveFile("%s/dup%d_%s", target, source))
     {
-        if (_leftImgView->image())
-        {
-            _leftImgView->image()->release();
-            _leftImgView->image(NULL);
-        }
-        if (_rightImgView->image())
-        {
-            _rightImgView->image()->release();
-            _rightImgView->image(NULL);
-        }
-
         int oldsel = _listbox->value();
         RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
 		p->valid = false;
-        ReloadPairview();
+        reloadPairview();
         _listbox->select(oldsel);
-        onListClick(0, 0); // force onclick       
+        onListClick(0, 0); // force onclick 
+        _listbox->take_focus(); // focus back to listbox
     }
 }
 
