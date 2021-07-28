@@ -170,7 +170,8 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
 }
 
 // Throw out any pair where delta exceeds 6
-static int THRESHOLD = 15; // Hamming distance always a multiple of two
+static int MINTHRESHOLD =  0; // Hamming distance always a multiple of two
+static int MAXTHRESHOLD = 17; // Hamming distance always a multiple of two
 
 std::mutex _pair_lock;
 
@@ -188,7 +189,7 @@ void CompareOneFile(int me)
             continue;
 
         int val = phashHamDist(my->PHash, they->PHash);
-        if (val < THRESHOLD)
+        if (val > MINTHRESHOLD && val < MAXTHRESHOLD)
         {
             Pair* p = new Pair();
             p->Val = val / 2;
