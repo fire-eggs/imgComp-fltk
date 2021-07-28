@@ -672,6 +672,13 @@ int handleSpecial(int event)
     return 1;
 }
 
+FILE _iob[] = { *stdin, *stdout, *stderr };
+
+extern "C" FILE * __cdecl __iob_func(void)
+{
+    return _iob;
+}
+
 int main(int argc, char** argv)
 {
     initlog("imgcomp.log");
@@ -687,7 +694,9 @@ int main(int argc, char** argv)
 
     fl_register_images();
     Fl_Image_Display::set_gamma(2.2f);
+#ifdef ANIMGIF
     Fl_Anim_GIF_Image::animate = false;
+#endif
 
     // TODO : use actual size when building controls?
     MainWin window(x, y, w, h);
