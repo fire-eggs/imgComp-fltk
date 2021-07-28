@@ -99,30 +99,30 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>E:\proj\FLTK14\build4;E:\proj\FLTK14\;E:\proj\libwebp;E:\proj\libwebp\src;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\proj\fltk\build;E:\proj\fltk;E:\proj\libwebp;E:\proj\libwebp\src;</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>_WINDOWS;_DEBUG;WIN32;ANIMGIF</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;WIN32</PreprocessorDefinitions>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>E:\proj\FLTK14\build4\lib\debug;E:\proj\libwebp\output\release-static\x64\lib;E:\proj\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>fltkd.lib;fltk_imagesd.lib;fltk_pngd.lib;fltk_zd.lib;libwebp.lib;libwebpdemux.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;comctl32.lib;Ws2_32.lib;jpeg-static.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\proj\FLTK\build\lib\debug;E:\proj\libwebp\output\release-static\x64\lib;E:\proj\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltkd.lib;fltk_imagesd.lib;fltk_jpegd.lib;fltk_pngd.lib;fltk_zd.lib;libwebp.lib;libwebpdemux.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;comctl32.lib;Ws2_32.lib;gdiplus.lib</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <OpenMPSupport>true</OpenMPSupport>
-      <PreprocessorDefinitions>_WINDOWS;WIN32;ANIMGIF</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>E:\proj\FLTK14\build4;E:\proj\FLTK14\;E:\proj\libwebp;E:\proj\libwebp\src;</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINDOWS;WIN32</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\proj\fltk\build;E:\proj\fltk;E:\proj\libwebp;E:\proj\libwebp\src;.</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>E:\proj\FLTK14\build4\lib\MinSizeRel;E:\proj\libwebp\output\release-static\x64\lib;E:\proj\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>fltk.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;libwebp.lib;libwebpdemux.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;comctl32.lib;Ws2_32.lib;jpeg-static.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\proj\FLTK\build\lib\release;E:\proj\libwebp\output\release-static\x64\lib;E:\proj\libjpeg-turbo64\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltk.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;libwebp.lib;libwebpdemux.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;comctl32.lib;Ws2_32.lib;jpeg-static.lib;gdiplus.lib</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
