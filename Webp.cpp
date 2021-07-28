@@ -2,7 +2,9 @@
 #include <webp\decode.h>
 #include <FL\fl_utf8.h>
 #include <FL\Fl_Shared_Image.H>
+#ifdef ANIMGIF
 #include <FL\Fl_Anim_GIF_Image.H>
+#endif
 
 bool strendswith(const char* str, const char* suffix)
 {
@@ -250,6 +252,7 @@ Fl_Shared_Image* LoadWebp(const char* filename, WebPDecBuffer **extra)
 		AnimatedImage *image = ReadAnimatedImage(data, data_size);
 		if (!image)
 			return NULL;
+#ifdef ANIMGIF
 		// convert to FL_Animate_GIF_Image compatible
 		int W = image->canvas_width;
 		int H = image->canvas_height;
@@ -261,7 +264,9 @@ Fl_Shared_Image* LoadWebp(const char* filename, WebPDecBuffer **extra)
 		}
 		gif->start();
 		return Fl_Shared_Image::get((Fl_RGB_Image *)gif);
-
+#else
+		return NULL;
+#endif
 		// TODO need to clean up AnimatedImage w/o killing the gif ??
 	}
 
