@@ -313,7 +313,7 @@ void load_pairview()
     //_listbox->redraw();
 }
 
-void ReloadPairview()
+void reloadPairview()
 {
     //_listbox->clear();
     //_pairview->clear();
