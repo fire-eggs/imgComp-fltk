@@ -91,8 +91,8 @@ void MainWin::resize(int x, int y, int w, int h)
     int newy = _listbox->y() + newhigh + BTN_BOX_HIGH;
     _btnBox->resize(0, newy - BTN_BOX_HIGH, w, BTN_BOX_HIGH);
     newhigh = h - newy; // (int)(h * 0.6 - BTN_BOX_HALFHIGH);
-    _leftImgView->resize(0, newy, w / 2, newhigh);
-    _rightImgView->resize(w/2, newy, w / 2, newhigh);
+    _leftImgView->resize(0, newy, w / 2-1, newhigh);
+    _rightImgView->resize(w/2+1, newy, w / 2-1, newhigh);
     updateBoxImages();
 
     widths[1] = (w - widths[0]) / 2;
@@ -693,7 +693,7 @@ int main(int argc, char** argv)
 {
     initlog("imgcomp.log");
     Fl::lock();
-    
+
     // use remembered main window size
     _PREFS = new Prefs();  
     int x, y, w, h;
@@ -781,11 +781,11 @@ int main(int argc, char** argv)
 
     _btnBox->end();
 
-    _leftImgView = new Fl_Box(0, BTNBOXY + BTN_BOX_HIGH, window.w() / 2, 250);
+    _leftImgView = new Fl_Box(0, BTNBOXY + BTN_BOX_HIGH, window.w() / 2-1, 250);
     _leftImgView->box(FL_UP_BOX);
     _leftImgView->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
-    _rightImgView = new Fl_Box(window.w()/2, 275, window.w() / 2, 250);
-    _rightImgView->box(FL_UP_BOX);
+    _rightImgView = new Fl_Box(window.w()/2+1, 275, window.w() / 2-1, 250);
+    _rightImgView->box(FL_DOWN_BOX);
     _rightImgView->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
 
 #ifdef _DEBUG
