@@ -623,15 +623,15 @@ void copyToClip_cb(Fl_Widget*, void*)
 
 void copyBulk_cb(Fl_Widget*, void*)
 {
-    int count = GetPairCount();
-    int len = 0;
+    size_t count = GetPairCount();
+    size_t len = 0;
     for (int i = 0; i < count; i++)
     {
         char* txt = GetPairText(i);
         len += strlen(txt);
         delete txt;
     }
-    int size = len + 3 + count;  // extra newline per line
+    size_t size = len + 3 + count;  // extra newline per line
     char* buff = (char*)malloc(size);
     if (!buff)
         return;
@@ -668,10 +668,10 @@ int handleSpecial(int event)
         case KBR_DONE_LOAD:
             _window->label("Ready!");
             load_pairview();
-            // do NOT flush here!
             _listbox->select(1);
             onListClick(0,0);
             Fl::awake();
+            //Fl::flush(); // do NOT flush here! the GUI dies
             break;
             
         default:
@@ -692,6 +692,7 @@ extern "C" FILE * __cdecl __iob_func(void)
 int main(int argc, char** argv)
 {
     initlog("imgcomp.log");
+    Fl::lock();
     
     // use remembered main window size
     _PREFS = new Prefs();  
