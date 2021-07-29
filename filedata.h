@@ -68,8 +68,11 @@ public:
     void Clear()
     {
         // TODO any memory leak from failing to delete contents of FileData instances?
-        for (int i=0; i < Infos.size(); i++)
+        for (int i=0; i < Infos.size(); i++) {
+            delete Infos[i]->Name;
+            delete Infos[i]->ActualPath;
             delete Infos[i];
+        }
         Infos.clear();
     }
 };

@@ -143,7 +143,8 @@ void ClearPairList()
     
     if (_pairlist)
     {
-        // TODO delete each Pair?
+        for (int i=0; i<_pairlist->size(); i++)
+            delete _pairlist->at(i);
         delete _pairlist;
     }
     _pairlist = new std::vector<Pair*>();
@@ -170,8 +171,8 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
 }
 
 // Throw out any pair where delta exceeds 6
-static int MINTHRESHOLD =  0; // Hamming distance always a multiple of two
-static int MAXTHRESHOLD = 17; // Hamming distance always a multiple of two
+static const int MINTHRESHOLD =  0; // Hamming distance always a multiple of two
+static const int MAXTHRESHOLD = 17; // Hamming distance always a multiple of two
 
 std::mutex _pair_lock;
 
@@ -179,7 +180,7 @@ void CompareOneFile(int me)
 {
     FileData* my = _data.Get(me);
     size_t count = _data.Count();
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(me,count,_data,_pairlist,_pair_lock, my)
     for (int j = me + 1; j < count; j++)
     {
         FileData* they = _data.Get(j);
