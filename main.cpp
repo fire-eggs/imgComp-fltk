@@ -29,6 +29,7 @@ void lockL_cb(Fl_Widget*, void*);
 void lockR_cb(Fl_Widget*, void*);
 void viewLog_cb(Fl_Widget*, void*);
 void copyToClip_cb(Fl_Widget*, void*);
+void copyBulk_cb(Fl_Widget*, void*);
 void clear_controls();
 void updateBoxImages();
 void onListClick(Fl_Widget* w, void* d);
@@ -48,10 +49,12 @@ Fl_Button* _btnDiff;
 MostRecentPaths* _mrp;
 Fl_Menu_Bar* _menu;
 
-char *loadfile; // hacky
+char *_loadfile; // hacky
 
-SharedImageExt* _leftImage;
-SharedImageExt* _rightImage;
+//SharedImageExt* _leftImage;
+//SharedImageExt* _rightImage;
+Fl_Image* _leftImage;
+Fl_Image* _rightImage;
 
 int widths[] = {50, 340, 340, 0};
 
@@ -157,9 +160,9 @@ static void MenuCB(Fl_Widget* window_p, void *userdata)
         {
             int path = choice - MI_FAV0;
             char** favs = _mrp->getAll();
-            loadfile = favs[path];
+            _loadfile = favs[path];
 
-            _mrp->Add(loadfile); // add "new" path
+            _mrp->Add(_loadfile); // add "new" path
             _mrp->Save();
             updateMRU(); // update the menu
 
@@ -189,6 +192,7 @@ Fl_Menu_Item mainmenuItems[] =
     {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE},
     {"View log file ...", 0, viewLog_cb, 0},
     {"Copy filenames to clipboard", 0, copyToClip_cb, 0},
+    {"Copy all data to clipboard", 0, copyBulk_cb, 0},
     {0},
 
     {0}
@@ -244,7 +248,7 @@ Pair *GetCurrentPair()
     return p;
 }
 
-void load_listbox()
+void load_pairview()
 {
     size_t count = GetPairCount();
     if (count < 1)
@@ -256,16 +260,20 @@ void load_listbox()
     for (int i = 0; i < count; i++)
     {
         if (GetPair(i)->valid)
-            _listbox->add(GetPairText(i), GetPairData(i));
+        {
+            char* txt = GetPairText(i);
+            _listbox->add(txt, GetPairData(i));
+            delete [] txt;
+        }
     }
     _listbox->make_visible(1);
     _listbox->redraw();
 }
 
-void ReloadListbox()
+void reloadPairview()
 {
-    _listbox->clear();
-    load_listbox();
+    _listbox->clear(); // TODO is a full rebuild necessary?
+    load_pairview();
 }
 
 double getNiceFileSize(const char *path)
@@ -315,12 +323,13 @@ void updateBoxImages()
     if (_rightImgView->image())
         _rightImgView->image()->release();
 
-    _leftImgView->image(_leftImage->image()->copy(iw, ih));
-    _rightImgView->image(_rightImage->image()->copy(iw, ih));
+//    _leftImgView->image(_leftImage->image()->copy(iw, ih));
+//    _rightImgView->image(_rightImage->image()->copy(iw, ih));
+    _leftImgView->image(_leftImage->copy(iw, ih));
+    _rightImgView->image(_rightImage->copy(iw, ih));
 
     _leftImgView->redraw();
     _rightImgView->redraw();
-
 }
 
 void onListClick(Fl_Widget* w, void* d)
@@ -347,8 +356,8 @@ void onListClick(Fl_Widget* w, void* d)
     if (_leftImage) { _leftImage->release(); _leftImage = NULL; }
     if (_rightImage) { _rightImage->release(); _rightImage = NULL; }
 
-    _leftImage = SharedImageExt::LoadImage(pathL);
-    _rightImage = SharedImageExt::LoadImage(pathR);
+    _leftImage = loadFile((char *)pathL,_leftImgView); //SharedImageExt::LoadImage(pathL);
+    _rightImage = loadFile((char *)pathR,_rightImgView); //SharedImageExt::LoadImage(pathR);
 
     // _leftImage or _rightImage may be null [file missing]
     // Force selection of next entry
@@ -365,7 +374,9 @@ void onListClick(Fl_Widget* w, void* d)
         return;
     }
 
-    updateTitle(pathL, _leftImage->baseImage(), pathR, _rightImage->baseImage());
+    //updateTitle(pathL, _leftImage->baseImage(), pathR, _rightImage->baseImage());
+    updateTitle(pathL, _leftImage, pathR, _rightImage);
+
     updateBoxImages();
   
     // ensure the current line is up a little bit - can't click to get to next line sometimes
@@ -382,6 +393,8 @@ void btnDup(bool left)
     if (!p)
         return;
     
+    //__debugbreak();
+
     auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
     auto pathR = GetFD(p->FileRightDex)->Name->c_str();
     auto target = left ? pathR : pathL;
@@ -390,23 +403,13 @@ void btnDup(bool left)
     // Trying for <srcpath>/<srcfile> to <srcpath>/dup0_<destfile>
     if (MoveFile("%s/dup%d_%s", target, source))
     {
-        if (_leftImgView->image())
-        {
-            _leftImgView->image()->release();
-            _leftImgView->image(NULL);
-        }
-        if (_rightImgView->image())
-        {
-            _rightImgView->image()->release();
-            _rightImgView->image(NULL);
-        }
-
         int oldsel = _listbox->value();
         RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
 		p->valid = false;
-        ReloadListbox();
+        reloadPairview();
         _listbox->select(oldsel);
-        onListClick(0, 0); // force onclick       
+        onListClick(0, 0); // force onclick 
+        _listbox->take_focus(); // focus back to listbox
     }
 }
 
@@ -428,7 +431,8 @@ void btnView(bool left)
     Pair* p = GetCurrentPair();
     if (!p)
         return;
-    showView(_leftImage->baseImage(), _rightImage->baseImage(), left);
+    //showView(_leftImage->baseImage(), _rightImage->baseImage(), left);
+    showView(_leftImage, _rightImage, left);
     //showView(p, left);
     
     _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
@@ -449,7 +453,8 @@ void btnDiff(bool left, bool stretch)
     Pair* p = GetCurrentPair();
     if (!p)
         return;
-    showDiff(_leftImage->image(), _rightImage->image(), stretch);
+    //showDiff(_leftImage->image(), _rightImage->image(), stretch);
+    showDiff(_leftImage, _rightImage, stretch);
     //showDiff(p, stretch);
 
     _listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
@@ -524,7 +529,7 @@ void filter_cb(Fl_Widget* w, void* d)
 
     clear_controls();
     FilterAndSort(filterSame);
-    load_listbox();
+    load_pairview();
     _listbox->select(1);
     onListClick(0, 0);
 }
@@ -569,15 +574,15 @@ void load_cb(Fl_Widget* , void* )
     Fl_File_Chooser* choose = new Fl_File_Chooser(filename, "*.phashc", 0, "Open phash file");
     choose->preview(false); // force preview off
     popup(choose);
-    loadfile = (char*)choose->value();
+    _loadfile = (char*)choose->value();
 
     // TODO can't control file_chooser location because underlying window is not exposed by the class
 
     //loadfile = fl_file_chooser("Open phash file", "*.phashc", filename);
-    if (!loadfile)
+    if (!_loadfile)
         return;
 
-    _mrp->Add(loadfile); // add new path
+    _mrp->Add(_loadfile); // add new path
     _mrp->Save();
     updateMRU(); // update the menu
 
@@ -616,6 +621,34 @@ void copyToClip_cb(Fl_Widget*, void*)
     }
 }
 
+void copyBulk_cb(Fl_Widget*, void*)
+{
+    int count = GetPairCount();
+    int len = 0;
+    for (int i = 0; i < count; i++)
+    {
+        char* txt = GetPairText(i);
+        len += strlen(txt);
+        delete txt;
+    }
+    int size = len + 3 + count;  // extra newline per line
+    char* buff = (char*)malloc(size);
+    if (!buff)
+        return;
+    buff[0] = '\0';
+    for (int i = 0; i < count; i++)
+    {
+        char* txt = GetPairText(i);
+        strcat(buff, txt);
+        strcat(buff, "\n");
+        delete txt;
+    }
+
+    Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
+    free(buff);
+
+}
+
 int handleSpecial(int event)
 {
     switch (event)
@@ -634,7 +667,7 @@ int handleSpecial(int event)
             break;
         case KBR_DONE_LOAD:
             _window->label("Ready!");
-            load_listbox();
+            load_pairview();
             // do NOT flush here!
             _listbox->select(1);
             onListClick(0,0);
@@ -646,6 +679,15 @@ int handleSpecial(int event)
     }
     return 1;
 }
+
+#if false
+FILE _iob[] = { *stdin, *stdout, *stderr };
+
+extern "C" FILE * __cdecl __iob_func(void)
+{
+    return _iob;
+}
+#endif
 
 int main(int argc, char** argv)
 {
@@ -662,7 +704,9 @@ int main(int argc, char** argv)
 
     fl_register_images();
     Fl_Image_Display::set_gamma(2.2f);
+#ifdef ANIMGIF
     Fl_Anim_GIF_Image::animate = false;
+#endif
 
     // TODO : use actual size when building controls?
     MainWin window(x, y, w, h);

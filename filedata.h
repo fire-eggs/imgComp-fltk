@@ -74,9 +74,6 @@ public:
     }
 };
 
-void log(const char *fmt, ...);
-void initlog();
-
 void readPhash(char*, int);
 void CompareFiles();
 size_t GetPairCount(); // the number of visible pairs
@@ -94,3 +91,5 @@ bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath);
 void RemoveMissingFile(int filedex);
 
 const char* GetActualPath(Pair* p, bool left);
+
+bool checkAnyStandalone();

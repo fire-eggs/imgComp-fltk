@@ -17,8 +17,11 @@
 #include "events.h"
 #include <FL/Fl.H>
 
+#include "logging.h"
+#include "archiveData.h"
+
 extern int sourceId;    // hacky
-extern char* loadfile;  // hacky
+extern char* _loadfile;  // hacky
 extern bool filterSame; // hacky
 
 void* proc_func(void *p)
@@ -27,7 +30,7 @@ void* proc_func(void *p)
     
     log("load");
     // load phash
-    readPhash(loadfile, sourceId);
+    readPhash(_loadfile, sourceId);
     sourceId++;
 
     log("compare");
@@ -42,6 +45,17 @@ void* proc_func(void *p)
    
     // viewing pairlist may be filtered [no matching sources]
     FilterAndSort(filterSame);
+
+    bool anyStandalone = checkAnyStandalone();
+    if (!anyStandalone)
+    {
+        log("archive");
+        compareArchives(); // Depends on _viewlist!!!
+    }
+    else
+    {
+        pixVsArchives();
+    }
 
     log ("done");
     Fl::handle_(KBR_DONE_LOAD, 0);

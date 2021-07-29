@@ -13,7 +13,9 @@
 
 #include <stdarg.h> // va_start for log
 #include <chrono>   // timestamp for log
-#include <string>
+#include <cstring>  // strcat
+#include <dirent.h> // MAXNAMLEN
+#include <string>   // std::string
 
 char _logpath[MAXNAMLEN * 2];
 

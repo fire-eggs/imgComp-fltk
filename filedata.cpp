@@ -12,7 +12,7 @@ FileSet _data;
 std::vector<Pair*>* _pairlist;
 std::vector<Pair*>* _viewlist;
 
-#define LIMIT 50000
+#define LIMIT 50000000
 
 std::string* replaceStrChar(std::string *str, const std::string& replace, char ch) 
 {
@@ -170,7 +170,8 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
 }
 
 // Throw out any pair where delta exceeds 6
-static int THRESHOLD = 15; // Hamming distance always a multiple of two
+static int MINTHRESHOLD =  0; // Hamming distance always a multiple of two
+static int MAXTHRESHOLD = 17; // Hamming distance always a multiple of two
 
 std::mutex _pair_lock;
 
@@ -188,7 +189,7 @@ void CompareOneFile(int me)
             continue;
 
         int val = phashHamDist(my->PHash, they->PHash);
-        if (val < THRESHOLD)
+        if (val > MINTHRESHOLD && val < MAXTHRESHOLD)
         {
             Pair* p = new Pair();
             p->Val = val / 2;
@@ -373,3 +374,8 @@ const char* GetActualPath(Pair* p, bool left)
     //if (fd->Archive == -1)
     return fd->Name->c_str(); // TODO memory leak?
 }
+
+void compareArchives() {}
+void pixVsArchives() {}
+
+bool checkAnyStandalone() { return true; }
