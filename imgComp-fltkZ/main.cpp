@@ -1,3 +1,5 @@
+#include <locale.h>
+
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Hold_Browser.H>
@@ -553,13 +555,9 @@ void btnViewR_cb(Fl_Widget* w, void* d)
 
 void btnDiff(bool left, bool stretch)
 {
-    Pair* p = getCurrentPair();
-    if (!p)
-        return;
     showDiff(_leftImage->image(), _rightImage->image(), stretch);
-    //showDiff(p, stretch);
 
-    //_listbox->take_focus(); // so user doesn't lose their place: focus back to listbox
+    // so user doesn't lose their place: focus back to listbox
     _pairview->take_focus();
 }
 
@@ -778,6 +776,8 @@ int handleSpecial(int event)
 
 int main(int argc, char** argv)
 {
+    setlocale(LC_ALL, "C");
+
     initlog("imgcompZ.log");
 
     // use remembered main window size
@@ -791,7 +791,9 @@ int main(int argc, char** argv)
 
     fl_register_images();
     Fl_Image_Display::set_gamma(2.2f);
+#ifdef ANIMGIF
     Fl_Anim_GIF_Image::animate = false;
+#endif
 
     // TODO : use actual size when building controls?
     MainWin window(x, y, w, h);
