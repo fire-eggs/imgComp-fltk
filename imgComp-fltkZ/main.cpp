@@ -280,9 +280,17 @@ void load_pairview()
         {
             char buff[2048];
             Pair* p = arcP->files->at(j);
+
+            FileData *f1 = GetFD(p->FileLeftDex);
+            FileData* f2 = GetFD(p->FileRightDex);
+
+            // TODO why might the "left" file not match the "left" archive??
+            FileData* leftF = f1->Archive == arcP->archId1 ? f1 : f2;
+            FileData* rightF = f1->Archive == arcP->archId1 ? f2 : f1;
+
             sprintf(buff, "%03d | %s | %s", p->Val,
-                GetFD(p->FileLeftDex)->Name->c_str(),
-                GetFD(p->FileRightDex)->Name->c_str());
+                leftF->Name->c_str(),
+                rightF->Name->c_str());
             TreeRowItem *crow= _pairview->AddRow(buff, row);
             crow->user_data((void *)j);
         }
