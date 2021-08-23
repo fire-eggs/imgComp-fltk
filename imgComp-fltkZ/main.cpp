@@ -43,7 +43,6 @@ Prefs* _PREFS;
 // TODO push into MainWin class?
 int sourceId;
 bool filterSame;
-//Fl_Browser* _listbox;
 TreeWithColumns* _pairview;
 Fl_Box* _leftImgView;
 Fl_Box* _rightImgView;
@@ -92,12 +91,12 @@ void MainWin::resize(int x, int y, int w, int h)
 
     // size children as desired
     int newhigh = (int)(h * 0.4 - BTN_BOX_HALFHIGH);
-    //_listbox->resize(_listbox->x(), _listbox->y(), w, newhigh);
     _pairview->resize(_pairview->x(), _pairview->y(), w, newhigh);
-    //int newy = _listbox->y() + newhigh + BTN_BOX_HIGH;
+
     int newy = _pairview->y() + newhigh + BTN_BOX_HIGH;
     _btnBox->resize(0, newy - BTN_BOX_HIGH, w, BTN_BOX_HIGH);
-    newhigh = h - newy; // (int)(h * 0.6 - BTN_BOX_HALFHIGH);
+
+    newhigh = h - newy;
     _leftImgView->resize(0, newy, w / 2, newhigh);
     _rightImgView->resize(w / 2, newy, w / 2, newhigh);
     updateBoxImages();
@@ -783,12 +782,16 @@ int handleSpecial(int event)
         Fl::awake();
         break;
     case KBR_DONE_LOAD:
+    {
         _window->label("Ready!");
         load_pairview();
         // do NOT flush here!
         //_listbox->select(1);
+        Fl_Tree_Item* first = _pairview->root()->child(0);
+        if (first) _pairview->select(first);
         onListClick(0, 0);
         Fl::awake();
+    }
         break;
 
     default:
