@@ -74,15 +74,16 @@ const char* ExtractFile(std::string arcpath, std::string filepath)
 
 	fs::create_directory(TEMPDIR);
 
-	fs::path p(arcpath);
+	fs::path p = fs::path(arcpath);
 	std::string outdir0(TEMPDIR2);
+	std::wstring outdir1(TEMPDIRW);
 	std::string outdir = outdir0 + p.stem().string() + std::string("\\");
 
 	wchar_t* outdirW = NULL;
 	utf8_to_wchar(outdir.c_str(), outdirW, -1);
 	//std::wstring outdirW(outdir.begin(), outdir.end());
-
-	fs::create_directory(outdir);
+	fs::path p2 = fs::u8path(outdir);
+	fs::create_directory(p2);
 	try
 	{
 		if (hasEnding(arcpath, ".RAR") || hasEnding(arcpath, ".CBR"))
