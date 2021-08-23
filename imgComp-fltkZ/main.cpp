@@ -245,7 +245,7 @@ ArchPair* getCurrentArchivePair()
     Fl_Tree_Item* sel = _pairview->first_selected_item();
     if (!sel)
         return NULL;
-    int data = (int)sel->user_data();
+    int data = (int)(fl_intptr_t)sel->user_data();
 
     //// Find the image pair currently selected in the listbox (null if none)
 
@@ -294,7 +294,7 @@ void load_pairview()
                 leftF->Name->c_str(),
                 rightF->Name->c_str());
             TreeRowItem *crow= _pairview->AddRow(buff, row);
-            crow->user_data((void *)j);
+            crow->user_data((void*)(fl_intptr_t)j);
         }
     }
 
@@ -406,7 +406,7 @@ void onListClick(Fl_Widget* w, void* d)
     if (who == _last)
         return;
     _last = who;
-    int data = (int)who->user_data();
+    int data = (int)(fl_intptr_t)who->user_data();
 
     //if (_listbox->size() < 1) // list is now empty, done
     //    return;
@@ -431,7 +431,7 @@ void onListClick(Fl_Widget* w, void* d)
     }
     else
     {
-        int dad = (int)who->parent()->user_data();
+        int dad = (int)(fl_intptr_t)who->parent()->user_data();
         p2 = getArchPair(dad);
         p = p2->files->at(data);
     }
@@ -707,7 +707,7 @@ void copyToClip_cb(Fl_Widget*, void*)
     if (!who)
         return;
 
-    int data = (int)who->user_data();
+    int data = (int)(fl_intptr_t)who->user_data();
 
     ArchPair* p2;
     Pair* p;
@@ -723,7 +723,7 @@ void copyToClip_cb(Fl_Widget*, void*)
     }
     else
     {
-        int dad = (int)who->parent()->user_data();
+        int dad = (int)(fl_intptr_t)who->parent()->user_data();
         p2 = getArchPair(dad);
         p = p2->files->at(data);
     }
@@ -756,12 +756,12 @@ void copyToClip_cb(Fl_Widget*, void*)
             a2 = *GetFD(p->FileRightDex)->Name;
     }
 
-    int size = a1.length() + a2.length() + 3;
+    size_t size = a1.length() + a2.length() + 3;
     char* buff = (char*)malloc(size);
     if (buff)
     {
         sprintf(buff, "%s\n%s", a1.c_str(), a2.c_str());
-        Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
+        Fl::copy(buff, (int)size, 2, Fl::clipboard_plain_text);
         free(buff);
     }
 }

@@ -6,7 +6,7 @@
 // erco 08/23/2019
 //
 
-#define LEFT_MARGIN 5.0         // TBD: Make this a class attribute
+#define LEFT_MARGIN 5         // TBD: Make this a class attribute
 
 // DERIVE CUSTOM CLASS FROM Fl_Tree_Item TO SHOW DATA IN COLUMNS
 
@@ -68,7 +68,7 @@ int TreeRowItem::draw_item_content(int render) {
                 //
                 fl_color(fg);
                 fl_push_clip(XX, Y, CW, H);          // prevent text from running into next column
-                fl_draw(s, n, XX + LEFT_MARGIN, RY);
+                fl_draw(s, (int)n, XX + LEFT_MARGIN, RY);
                 fl_pop_clip();                       // clip off
                 // Draw vertical lines for all columns except first
                 if (t > 0 && treewc->column_separators()) {
@@ -83,7 +83,7 @@ int TreeRowItem::draw_item_content(int render) {
             }
             else {
                 // Last field? Return entire length of unclipped field
-                RX += fl_width(s) + LEFT_MARGIN;
+                RX += (int)(fl_width(s) + LEFT_MARGIN);
                 s += n;
             }
         }
