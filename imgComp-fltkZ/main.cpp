@@ -703,17 +703,40 @@ void viewLog_cb(Fl_Widget*, void*)
 
 void copyToClip_cb(Fl_Widget*, void*)
 {
-    ArchPair* zipPair = getCurrentArchivePair();
-    if (!zipPair)
+    Fl_Tree_Item* who = _pairview->first_selected_item();
+    if (!who)
         return;
-    Pair* p = zipPair->files->at(0);
+
+    int data = (int)who->user_data();
+
+    ArchPair* p2;
+    Pair* p;
+
+    bool arcPathOnly = false;
+    if (who->has_children())
+    {
+        // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
+        p2 = getArchPair(data);
+        p = p2->files->at(0);
+        //Pair* p = GetPair(data);
+        arcPathOnly = true;
+    }
+    else
+    {
+        int dad = (int)who->parent()->user_data();
+        p2 = getArchPair(dad);
+        p = p2->files->at(data);
+    }
 
     std::string a1;
     std::string a2;
 
+    ArchPair* zipPair = p2;
+
     // TODO refactor to common code
     if (zipPair->archId1 != -1 &&
-        zipPair->archId2 != -1)
+        zipPair->archId2 != -1 && 
+          arcPathOnly)
     {
         // both archives, only get the archive paths
         a1 = getArchivePath(zipPair->archId1);
