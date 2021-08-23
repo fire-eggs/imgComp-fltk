@@ -575,26 +575,22 @@ void btnDiffS_cb(Fl_Widget*, void*)
 
 void btnNext_cb(Fl_Widget*, void*)
 {
-    //if (_listbox->size() < 1) // list is now empty, done
-    //    return;
-
-    //int line = _listbox->value();
-    //if (!line)
-    //    line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
-    //_listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
-    //onListClick(0, 0);
+    Fl_Tree_Item* sel = _pairview->first_selected_item();
+    if (sel) _pairview->deselect(sel);
+    Fl_Tree_Item* next = _pairview->next(sel);
+    if (!next) return;       
+    _pairview->select(next);
+    // TODO if next is archive-pair, move to first image
 }
 
 void btnPrev_cb(Fl_Widget*, void*)
 {
-    //if (_listbox->size() < 1) // list is now empty, done
-    //    return;
-
-    //int line = _listbox->value();
-    //if (!line)
-    //    line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
-    //_listbox->select(line - 1, 1); // NOTE: does NOT force 'onclick' event
-    //onListClick(0, 0);
+    Fl_Tree_Item* sel = _pairview->first_selected_item();
+    if (sel) _pairview->deselect(sel);
+    Fl_Tree_Item* next = _pairview->prev(sel);
+    if (!next) return;
+    _pairview->select(next);
+    // TODO if next is archive-pair, move to first image
 }
 
 void clear_controls()
