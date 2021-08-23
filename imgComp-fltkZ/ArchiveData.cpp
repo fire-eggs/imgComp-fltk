@@ -277,7 +277,7 @@ void* getArchPairData(int who)
 
 ArchPair* getArchPair(int who)
 {
-    if (who < 0 || who > _archPairList->size())
+    if (who < 0 || who >= _archPairList->size())
         return NULL;
     return _archPairList->at(who);
 }
