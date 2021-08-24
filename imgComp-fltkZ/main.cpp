@@ -239,33 +239,6 @@ void updateMRU()
     _window->do_menu();
 }
 
-ArchPair* getCurrentArchivePair()
-{
-    Fl_Tree_Item* sel = _pairview->first_selected_item();
-    if (!sel)
-        return NULL;
-    int data = (int)(fl_intptr_t)sel->user_data();
-
-    //// Find the image pair currently selected in the listbox (null if none)
-
-    //int line = _listbox->value();
-    //if (line == 0)
-    //    return NULL;
-
-    //int data = (intptr_t)_listbox->data(line);
-
-    ArchPair* p2 = getArchPair(data);
-    return p2;
-}
-
-Pair* getCurrentPair()
-{
-    ArchPair* p2 = getCurrentArchivePair();
-    if (!p2)
-        return NULL;
-    return p2->files->at(0); // TODO temp hack: return first file pair
-}
-
 void load_pairview()
 {
     size_t count = getArchPairCount();
