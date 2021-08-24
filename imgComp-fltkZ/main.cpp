@@ -556,21 +556,22 @@ void btnDiffS_cb(Fl_Widget*, void*)
 void btnNext_cb(Fl_Widget*, void*)
 {
     Fl_Tree_Item* sel = _pairview->first_selected_item();
-    if (sel) _pairview->deselect(sel);
     Fl_Tree_Item* next = _pairview->next(sel);
     if (!next) return;       
+    if (sel) _pairview->deselect(sel); // don't deselect old unless there is a new one to move to
     _pairview->select(next);
-    // TODO if next is archive-pair, move to first image
+    // TODO if next is archive-pair, move to next again
 }
 
 void btnPrev_cb(Fl_Widget*, void*)
 {
+    // TODO check if prev is root and NOT move
     Fl_Tree_Item* sel = _pairview->first_selected_item();
-    if (sel) _pairview->deselect(sel);
-    Fl_Tree_Item* next = _pairview->prev(sel);
-    if (!next) return;
-    _pairview->select(next);
-    // TODO if next is archive-pair, move to first image
+    Fl_Tree_Item* prev = _pairview->prev(sel);
+    if (!prev) return;
+    if (sel) _pairview->deselect(sel); // don't deselect old unless there is one to move to
+    _pairview->select(prev);
+    // TODO if prev is archive-pair, move to previous again
 }
 
 void clear_controls()
