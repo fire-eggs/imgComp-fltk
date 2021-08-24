@@ -407,18 +407,6 @@ void onListClick(Fl_Widget* w, void* d)
     _last = who;
     int data = (int)(fl_intptr_t)who->user_data();
 
-    //if (_listbox->size() < 1) // list is now empty, done
-    //    return;
-
-    //int line = _listbox->value();
-    //if (!line)
-    //    line = 1; // when advancing thru the list below reaches bottom, selection is set to none.
-
-    //int data = (intptr_t)_listbox->data(line);
-    //size_t max = GetPairCount();
-    //if (data >= max)
-    //    return;
-
     ArchPair* p2;
     Pair* p;
     if (who->has_children())
@@ -435,8 +423,6 @@ void onListClick(Fl_Widget* w, void* d)
         p = p2->files->at(data);
     }
 
-    //const char* pathL = GetFD(p->FileLeftDex)->Name->c_str();
-    //const char* pathR = GetFD(p->FileRightDex)->Name->c_str();
     const char* pathL = GetActualPath(p, true);
     const char* pathR = GetActualPath(p, false);
 
@@ -532,9 +518,6 @@ void btnView(bool left)
     // activate the view window with the plain images.
     // bool left: start with the 'left' image
 
-    Pair* p = getCurrentPair();
-    if (!p)
-        return;
     Fl_Image* leftI = _leftImage ? _leftImage->baseImage() : NULL;
     Fl_Image* rightI = _rightImage ? _rightImage->baseImage() : NULL;
     showView(leftI, rightI, left);
