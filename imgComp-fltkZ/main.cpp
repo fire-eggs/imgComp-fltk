@@ -367,6 +367,38 @@ void updateBoxImages()
 
 Fl_Tree_Item* _last = NULL;
 
+bool getActiveEntry(ArchPair** p2, Pair** p, Fl_Tree_Item*who = nullptr)
+{
+    *p2 = nullptr;
+    *p = nullptr;
+
+    if (!who)
+        who = _pairview->first_selected_item();
+    if (!who)
+        return false;
+
+    int data = (int)(fl_intptr_t)who->user_data();
+
+    bool arcPathOnly = false;
+    if (who->has_children())
+    {
+        // Selection is on root of sub-tree: get the first filepair
+        *p2 = getArchPair(data);
+        *p = (*p2)->files->at(0);
+        arcPathOnly = true;
+    }
+    else
+    {
+        if (!who->parent()) return false;
+
+        // 'data' value is relative to PARENT
+        int dad = (int)(fl_intptr_t)who->parent()->user_data();
+        *p2 = getArchPair(dad);
+        *p = (*p2)->files->at(data);
+    }
+    return arcPathOnly;
+}
+
 void onListClick(Fl_Widget* w, void* d)
 {
     // TODO prevents initial draw from "Done" logic
@@ -378,23 +410,12 @@ void onListClick(Fl_Widget* w, void* d)
     if (who == _last)
         return;
     _last = who;
-    int data = (int)(fl_intptr_t)who->user_data();
 
     ArchPair* p2;
     Pair* p;
-    if (who->has_children())
-    {
-        // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
-        p2 = getArchPair(data);
-        p = p2->files->at(0);
-        //Pair* p = GetPair(data);
-    }
-    else
-    {
-        int dad = (int)(fl_intptr_t)who->parent()->user_data();
-        p2 = getArchPair(dad);
-        p = p2->files->at(data);
-    }
+    bool ignore = getActiveEntry(&p2, &p, who);
+    if (!p2)
+        return;
 
     const char* pathL = GetActualPath(p, true);
     const char* pathR = GetActualPath(p, false);
@@ -406,28 +427,11 @@ void onListClick(Fl_Widget* w, void* d)
     _leftImage = SharedImageExt::LoadImage(pathL);
     _rightImage = SharedImageExt::LoadImage(pathR);
 
-    //// _leftImage or _rightImage may be null [file missing]
-    //// Force selection of next entry
-    //// Force selection of next entry
-    //if (!_leftImage || !_rightImage)
-    //{
-    //    p->valid = false;
-
-    //    // TODO do this w/o recursion!
-    //    // TODO needs to be done in the viewlist ???
-    //    _listbox->select(line + 1, 1); // NOTE: does NOT force 'onclick' event
-    //    _listbox->remove(line);
-    //    _listbox->redraw();
-    //    onListClick(0, 0); // force onclick
-    //    return;
-    //}
-
     if (_leftImage && _rightImage) // TODO shouldn't happen
         updateTitle(pathL, _leftImage->baseImage(), pathR, _rightImage->baseImage());
     updateBoxImages();
 
-    //// ensure the current line is up a little bit - can't click to get to next line sometimes
-    //_listbox->bottomline(line + 5);
+    // TODO update 'DUP' buttons for file in archive
 }
 
 void btnNext_cb(Fl_Widget*, void*);
@@ -438,42 +442,17 @@ void btnDup(bool left)
     //// rename one of the images as a duplicate of the other
     //// bool left : rename the 'left' image
 
-    Fl_Tree_Item* who = _pairview->first_selected_item();
-    if (!who)
-        return;
-
-    int data = (int)(fl_intptr_t)who->user_data();
-
     ArchPair* p2;
     Pair* p;
-
-    bool arcPathOnly = false;
-    if (who->has_children())
-    {
-        // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
-        p2 = getArchPair(data);
-        p = p2->files->at(0);
-        arcPathOnly = true;
-    }
-    else
-    {
-        int dad = (int)(fl_intptr_t)who->parent()->user_data();
-        p2 = getArchPair(dad);
-        p = p2->files->at(data);
-    }
-
-
-//    ArchPair* p2 = getCurrentArchivePair();
-//    if (!p2)
-//        return;
+    bool arcPathOnly = getActiveEntry(&p2, &p);
+    if (!p2)
+        return;
 
     // Can't 'dup' a file in an archive
     if (left && p2->archId1 != -1)
         return;
     if (!left && p2->archId2 != -1)
         return;
-
-//    Pair *p = p2->files->at(0); // TODO temp hack: return first file pair
 
     auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
     auto pathR = GetFD(p->FileRightDex)->Name->c_str();
@@ -685,35 +664,14 @@ void viewLog_cb(Fl_Widget*, void*)
 
 void copyToClip_cb(Fl_Widget*, void*)
 {
-    Fl_Tree_Item* who = _pairview->first_selected_item();
-    if (!who)
-        return;
-
-    int data = (int)(fl_intptr_t)who->user_data();
-
-    ArchPair* p2;
+    ArchPair* zipPair;
     Pair* p;
-
-    bool arcPathOnly = false;
-    if (who->has_children())
-    {
-        // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
-        p2 = getArchPair(data);
-        p = p2->files->at(0);
-        //Pair* p = GetPair(data);
-        arcPathOnly = true;
-    }
-    else
-    {
-        int dad = (int)(fl_intptr_t)who->parent()->user_data();
-        p2 = getArchPair(dad);
-        p = p2->files->at(data);
-    }
+    bool arcPathOnly = getActiveEntry(&zipPair, &p);
+    if (!zipPair)
+        return;
 
     std::string a1;
     std::string a2;
-
-    ArchPair* zipPair = p2;
 
     // TODO refactor to common code
     if (zipPair->archId1 != -1 &&
@@ -781,6 +739,13 @@ int handleSpecial(int event)
         return 0;
     }
     return 1;
+}
+
+FILE _iob[] = { *stdin, *stdout, *stderr };
+
+extern "C" FILE * __cdecl __iob_func(void)
+{
+    return _iob;
 }
 
 int main(int argc, char** argv)
