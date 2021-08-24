@@ -513,9 +513,10 @@ void btnView(bool left)
     // activate the view window with the plain images.
     // bool left: start with the 'left' image
 
-    Fl_Image* leftI = _leftImage ? _leftImage->baseImage() : NULL;
-    Fl_Image* rightI = _rightImage ? _rightImage->baseImage() : NULL;
-    showView(leftI, rightI, left);
+    if (!_leftImage || !_rightImage) return;
+
+    // NOTE: by using baseimage(), view may get an animated image
+    showView(_leftImage->baseImage(), _rightImage->baseImage(), left);
 
     _pairview->take_focus(); // so user doesn't lose their place: focus back to list
 }
@@ -532,6 +533,9 @@ void btnViewR_cb(Fl_Widget* w, void* d)
 
 void btnDiff(bool left, bool stretch)
 {
+    if (!_leftImage || !_rightImage) return;
+
+    // NOTE: by using image(), diff doesn't get an animated image
     showDiff(_leftImage->image(), _rightImage->image(), stretch);
 
     // so user doesn't lose their place: focus back to listbox
