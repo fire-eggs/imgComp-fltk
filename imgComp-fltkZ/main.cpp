@@ -457,15 +457,42 @@ void onListClick(Fl_Widget* w, void* d)
     //_listbox->bottomline(line + 5);
 }
 
+void btnNext_cb(Fl_Widget*, void*);
+
 void btnDup(bool left)
 {
     //// Common code for the two 'Dup' buttons
     //// rename one of the images as a duplicate of the other
     //// bool left : rename the 'left' image
 
-    ArchPair* p2 = getCurrentArchivePair();
-    if (!p2)
+    Fl_Tree_Item* who = _pairview->first_selected_item();
+    if (!who)
         return;
+
+    int data = (int)(fl_intptr_t)who->user_data();
+
+    ArchPair* p2;
+    Pair* p;
+
+    bool arcPathOnly = false;
+    if (who->has_children())
+    {
+        // TODO temp hack: show first filepair in archives [may NOT be the first file in each archive!]
+        p2 = getArchPair(data);
+        p = p2->files->at(0);
+        arcPathOnly = true;
+    }
+    else
+    {
+        int dad = (int)(fl_intptr_t)who->parent()->user_data();
+        p2 = getArchPair(dad);
+        p = p2->files->at(data);
+    }
+
+
+//    ArchPair* p2 = getCurrentArchivePair();
+//    if (!p2)
+//        return;
 
     // Can't 'dup' a file in an archive
     if (left && p2->archId1 != -1)
@@ -473,7 +500,7 @@ void btnDup(bool left)
     if (!left && p2->archId2 != -1)
         return;
 
-    Pair *p = p2->files->at(0); // TODO temp hack: return first file pair
+//    Pair *p = p2->files->at(0); // TODO temp hack: return first file pair
 
     auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
     auto pathR = GetFD(p->FileRightDex)->Name->c_str();
@@ -493,14 +520,9 @@ void btnDup(bool left)
             _rightImgView->image()->release();
             _rightImgView->image(NULL);
         }
-
-    //    int oldsel = _listbox->value();
-    //    RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
-    //    p->valid = false;
-    //    ReloadListbox();
-    //    _listbox->select(oldsel);
-    //    onListClick(0, 0); // force onclick       
     }
+
+    btnNext_cb(0, 0);
 }
 
 void btnDupL_cb(Fl_Widget* w, void* d)
