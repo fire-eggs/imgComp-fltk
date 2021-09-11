@@ -53,7 +53,9 @@ void readPhash(char* filename, int sourceId)
         if (!buffer[0])
             continue;
 
-        // Lines of the form <hash>|<crc>|<animated>|<filepath>
+        // Lines of the form:
+        // phash-fltk:  <hash>|<crc>|<animated>|<hash>|<hash>|<hash>|<filepath>
+        // testapp: <hash>|<crc>|<hash>|<hash>|<hash>|<filepath>
 
         char* parts = strtok(buffer, "|");
         if (!parts) // unexpected data
@@ -68,21 +70,41 @@ void readPhash(char* filename, int sourceId)
             continue;
 
         unsigned long crc = strtoul(parts, NULL, 10);
+        /* if CRC is zero, can't be used
         if (crc == 0ULL)
             continue; // unexpected data: assuming CRC cannot be zero
+        */
 
         parts = strtok(NULL, "|");
         if (!parts) // unexpected data
             continue;
 
+        unsigned long long hash090 = 0;
+        unsigned long long hash180 = 0;
+        unsigned long long hash270 = 0;
         if (strlen(parts) == 1)  // phash-fltk
         {
             is_animated = parts[0] == '1';
 
+            parts = strtok(NULL, "|");
+            if (!parts) // unexpected data
+                continue;
+        }
+
+        hash090 = strtoull(parts, NULL, 10);
         parts = strtok(NULL, "|");
         if (!parts) // unexpected data
             continue;
-        }
+
+        hash180 = strtoull(parts, NULL, 10);
+        parts = strtok(NULL, "|");
+        if (!parts) // unexpected data
+            continue;
+
+        hash270 = strtoull(parts, NULL, 10);
+        parts = strtok(NULL, "|");
+        if (!parts) // unexpected data
+            continue;
 
         parts[strlen(parts) - 1] = '\0'; //kill trailing newline
         FileData* fd = new FileData();
@@ -126,6 +148,9 @@ void readPhash(char* filename, int sourceId)
         fd->Archive = -1;
         fd->ActualPath = NULL;
 
+        fd->hash090 = hash090;
+        fd->hash180 = hash180;
+        fd->hash270 = hash270;
         _data.Add(fd);
 
         limit--;
@@ -189,8 +214,14 @@ void CompareOneFile(int me)
         if (my->Animated != they->Animated)
             continue;
 
-        int val = phashHamDist(my->PHash, they->PHash);
-        if (val > MINTHRESHOLD && val < MAXTHRESHOLD)
+        int val0 = phashHamDist(my->PHash, they->PHash);
+        int val1 = phashHamDist(my->PHash, they->hash090);
+        int val2 = phashHamDist(my->PHash, they->hash180);
+        int val3 = phashHamDist(my->PHash, they->hash270);
+        int val = std::min(val0, val1);
+        val = std::min(val, val2);
+        val = std::min(val, val3);
+        if (val >= MINTHRESHOLD && val < MAXTHRESHOLD)
         {
             Pair* p = new Pair();
             p->Val = val / 2;
@@ -199,8 +230,10 @@ void CompareOneFile(int me)
             p->CRCMatch = (my->CRC == they->CRC) &&
                            my->CRC != 0 &&
                            they->CRC != 0;
+            p->rotate = val != val0; // true if match via rotation
             p->valid = true; // assume valid until otherwise
 
+            // TODO mark pair based on match type (r90, r180, etc)
             std::lock_guard<std::mutex> guard(_pair_lock);
             _pairlist->push_back(p);
         }
@@ -228,9 +261,9 @@ char* GetPairText(int who) // the text to display for a specific pair
 
     Pair* p = _viewlist->at(who);
     if (p->Val == 0 && p->CRCMatch)
-        strcat(buff, "DUP | ");
+        sprintf(buff, "DUP%c | ", p->rotate ? 'R' : ' ');
     else
-        sprintf(buff, "%03d | ", p->Val);
+        sprintf(buff, "%03d%c | ", p->Val, p->rotate ? 'R' : ' ');
     FileData* dataL = _data.Get(p->FileLeftDex);
     FileData* dataR = _data.Get(p->FileRightDex);
 

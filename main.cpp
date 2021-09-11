@@ -693,6 +693,7 @@ int main(int argc, char** argv)
 {
     initlog("imgcomp.log");
     Fl::lock();
+    setlocale(LC_ALL, "C");
 
     // use remembered main window size
     _PREFS = new Prefs();  

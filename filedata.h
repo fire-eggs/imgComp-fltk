@@ -14,6 +14,9 @@ struct FileData
     int Animated;             // image is animated or not
     int Archive;              // from archive (as archive list index)
     std::string* ActualPath;    // where extracted from archive onto disk
+    unsigned long long hash090; // 64 bit : calculated phash as rotated 90degrees clockwise
+    unsigned long long hash180; // 64 bit : calculated phash as rotated 90degrees clockwise
+    unsigned long long hash270; // 64 bit : calculated phash as rotated 90degrees clockwise
 };
 
 class Pair
@@ -26,6 +29,7 @@ public:
     double FVal;     // TODO unused?
     bool CRCMatch;
     bool valid;      // been removed/renamed at some point?
+    bool rotate;     // match via rotation
 
     int Compare(Pair other)
     {
