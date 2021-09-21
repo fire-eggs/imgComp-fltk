@@ -99,8 +99,10 @@ Fl_Image *loadFile(char *filename, Fl_Widget *owner)
 #endif
 
     // 2. Try to open as (animated) gif
+    // TODO KBR 20210921 : hack, let Fl_Anim_GIF_Image also hold non-animated. Allows some sort of view.
     Fl_Anim_GIF_Image *animgif = new Fl_Anim_GIF_Image(filename, nullptr, Fl_Anim_GIF_Image::Start);
-    if (animgif && animgif->valid() && animgif->is_animated()) // TODO can use fail() ?
+    //if (animgif && animgif->valid() && animgif->is_animated()) // TODO can use fail() ?
+    if (animgif && animgif->valid())
     {
         animgif->canvas(owner, Fl_Anim_GIF_Image::Flags::DontResizeCanvas |
                                Fl_Anim_GIF_Image::Flags::DontSetAsImage);

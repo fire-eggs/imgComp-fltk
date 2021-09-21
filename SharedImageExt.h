@@ -1,7 +1,7 @@
 #pragma once
 #include <FL/Fl_Shared_Image.H>
 #ifdef ANIMGIF
-#include <FL/Fl_Anim_GIF_Image.H>
+#include "Fl_Anim_GIF_Image.h"
 #endif
 extern "C" {
 #include <webp/decode.h>

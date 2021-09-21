@@ -1,5 +1,7 @@
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Image_Surface.H>
+#include <FL/fl_ask.H>
 
 #include "ViewWin.h"
 #include "Fl_Image_Display.H"
@@ -51,7 +53,7 @@ void ViewImage()
             else
                 path = GetFD(_viewing->FileRightDex)->Name->c_str();
 
-            img = Fl_Shared_Image::get(path);
+            img = Fl_Shared_Image::get(path); // TODO should be loadFile() call?
         }
         else
         {
@@ -62,7 +64,7 @@ void ViewImage()
             return;
 
         auto scale = _disp->scale();
-        _disp->value((Fl_Shared_Image *)img);
+        _disp->value(img);
         _disp->scale(scale);
 
         char buff[1024];
@@ -317,6 +319,28 @@ bool doDiff(Fl_Image* imgL, Fl_Image* imgR)
 
 bool doDiff1(Fl_Image* imgL, Fl_Image* imgR, bool stretch, bool release)
 {
+    Fl_Pixmap *pimg = dynamic_cast<Fl_Pixmap *>(imgL);
+    if (pimg)
+    {
+        Fl_Image_Surface *imgSurf = new Fl_Image_Surface(imgL->w(), imgL->h());
+        Fl_Surface_Device::push_current(imgSurf);
+        imgL->draw(0, 0);
+        imgL = imgSurf->image();
+        Fl_Surface_Device::pop_current();
+        delete imgSurf;
+    }
+    pimg = dynamic_cast<Fl_Pixmap *>(imgR);
+    if (pimg)
+    {
+        Fl_Image_Surface *imgSurf = new Fl_Image_Surface(imgR->w(), imgR->h());
+        Fl_Surface_Device::push_current(imgSurf);
+        imgR->draw(0, 0);
+        imgR = imgSurf->image();
+        Fl_Surface_Device::pop_current();
+        delete imgSurf;
+    }
+
+
     // Deal with stretch
     if (!stretch)
     {
@@ -342,6 +366,7 @@ bool diff(Pair* toview, bool stretch, Fl_Image* imgL, Fl_Image* imgR)
 {
     if (imgL->d() != imgR->d())
     {
+        fl_alert("Mixed image depths NYI");
         return false; // punt on mixed depths for now
     }
 

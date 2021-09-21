@@ -953,7 +953,7 @@ Fl_Image_Display::update_scrollbars()
 //
 
 void
-Fl_Image_Display::value(Fl_Shared_Image* v)
+Fl_Image_Display::value(Fl_Image* v)
 {
 #ifdef ANIMGIF     
 
@@ -975,7 +975,7 @@ Fl_Image_Display::value(Fl_Shared_Image* v)
 	}
 #endif
 
-	animgif_ = dynamic_cast<Fl_Anim_GIF_Image*>(v->KBR());
+	animgif_ = dynamic_cast<Fl_Anim_GIF_Image*>(v);
 
 #endif
 

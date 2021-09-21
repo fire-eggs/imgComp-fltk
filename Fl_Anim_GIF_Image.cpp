@@ -750,6 +750,8 @@ Fl_Image *Fl_Anim_GIF_Image::copy(int W_, int H_) {
     copied->_fi->canvas_h = H_;
     copied->_fi->copy(*_fi); // copy the meta data
 
+    copied->_frame = 0; // 20210921 : if use Fl_Anim_GIF_Image as a container for not animated GIF, nothing happens if this is not set
+
     copied->_uncache = _uncache; // copy 'inherits' frame uncache status
     copied->_valid = _valid && copied->_fi->frames_size == _fi->frames_size;
     scale_frame(); // scale current frame now

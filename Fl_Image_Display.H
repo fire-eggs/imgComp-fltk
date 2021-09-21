@@ -20,7 +20,7 @@
 #  include <FL/Fl_Scrollbar.H>
 #  include <FL/Fl_Shared_Image.H>
 #ifdef ANIMGIF
-# include <FL/Fl_Anim_GIF_Image.H>
+# include "Fl_Anim_GIF_Image.h"
 #endif
 
 enum
@@ -48,7 +48,7 @@ class FL_EXPORT Fl_Image_Display : public Fl_Group
 
   int			mode_;
 
-  Fl_Shared_Image	*value_;
+  Fl_Image	*value_;
 #ifdef ANIMGIF  
   Fl_Anim_GIF_Image *animgif_; // KBR
 #endif
@@ -96,8 +96,8 @@ class FL_EXPORT Fl_Image_Display : public Fl_Group
   double		scale() const { return factor_; }
   int			start_x() const { return start_x_; }
   int			start_y() const { return start_y_; }
-  void			value(Fl_Shared_Image *v);
-  Fl_Shared_Image	    *value() { return value_; }
+  void			value(Fl_Image *v);
+  Fl_Image	    *value() { return value_; }
   int			xposition() { return xscrollbar_.value(); }
   int			yposition() { return yscrollbar_.value(); }
 
