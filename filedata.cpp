@@ -1,11 +1,11 @@
-#include "filedata.h"
-#include <FL/Fl.H> // fl_fopen
-#include <FL/fl_ask.H> // fl_alert
-//#include <stdlib.h>
+#include <cstdarg> // va_start
 #include <algorithm>
-
 #include <omp.h>
 #include <mutex>
+
+#include <FL/Fl.H> // fl_fopen
+#include <FL/fl_ask.H> // fl_alert
+#include "filedata.h"
 #include "logging.h"
 
 FileSet _data;
@@ -201,6 +201,19 @@ static const int MAXTHRESHOLD = 17; // Hamming distance always a multiple of two
 
 std::mutex _pair_lock;
 
+char msg_buf[1024]; // must be global to last beyond end of message() function
+
+void message_cb(void *);
+
+void message(const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(msg_buf, 1024, format, ap);
+    Fl::awake(reinterpret_cast<Fl_Awake_Handler>(message_cb), msg_buf);
+    va_end(ap);
+}
+
 void CompareOneFile(int me)
 {
     FileData* my = _data.Get(me);
@@ -243,8 +256,13 @@ void CompareOneFile(int me)
 void CompareFiles()
 {
     ClearPairList();
-    for (int i = 0; i < _data.Count(); i++)
+    int count = _data.Count();
+    for (int i = 0; i < count; i++)
+    {
+        if ((i % 10) == 0)
+            message("Comparing %d of %d", i, count);
         CompareOneFile(i);
+    }
 }
 
 size_t GetPairCount() // the number of visible pairs

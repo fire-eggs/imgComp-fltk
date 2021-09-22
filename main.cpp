@@ -808,3 +808,8 @@ int main(int argc, char** argv)
     return Fl::run();
 
 }
+
+void message_cb(void *data) {
+    _window->label((const char *)data);
+    Fl::flush();
+}
