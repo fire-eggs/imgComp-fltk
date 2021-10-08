@@ -611,7 +611,7 @@ void copyToClip_cb(Fl_Widget*, void*)
     auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
     auto pathR = GetFD(p->FileRightDex)->Name->c_str();
 
-    int size = strlen(pathL) + strlen(pathR) + 3;
+    int size = strlen(pathL) + strlen(pathR) + 1;
     char* buff = (char *)malloc(size);
     if (buff)
     {
