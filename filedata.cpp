@@ -259,7 +259,7 @@ void CompareFiles()
     int count = _data.Count();
     for (int i = 0; i < count; i++)
     {
-        if ((i % 10) == 0)
+        if ((i % 100) == 0)
             message("Comparing %d of %d", i, count);
         CompareOneFile(i);
     }
