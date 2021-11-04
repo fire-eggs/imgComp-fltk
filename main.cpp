@@ -623,6 +623,9 @@ void copyToClip_cb(Fl_Widget*, void*)
 
 void copyBulk_cb(Fl_Widget*, void*)
 {
+    int res = fl_ask("This will take a long time, are you sure?");
+    if (res == 0)
+        return;
     size_t count = GetPairCount();
     size_t len = 0;
     for (int i = 0; i < count; i++)
