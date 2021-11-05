@@ -611,12 +611,12 @@ void copyToClip_cb(Fl_Widget*, void*)
     auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
     auto pathR = GetFD(p->FileRightDex)->Name->c_str();
 
-    int size = strlen(pathL) + strlen(pathR) + 1;
+    size_t size = strlen(pathL) + strlen(pathR) + 2; // +1 for newline, +1 for trailing zero
     char* buff = (char *)malloc(size);
     if (buff)
     {
         sprintf(buff, "%s\n%s", pathL, pathR);
-        Fl::copy(buff, size, 2, Fl::clipboard_plain_text);
+        Fl::copy(buff, (int)size, 2, Fl::clipboard_plain_text);
         free(buff);
     }
 }
