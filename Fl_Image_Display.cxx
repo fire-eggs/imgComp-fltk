@@ -980,6 +980,9 @@ Fl_Image_Display::value(Fl_Image* v)
 #endif
 
 	value_ = v;
+    if (!v)
+        return;
+
 	set_zoommode(zoomMode_);
 
 	// Make sure new image position is reset
