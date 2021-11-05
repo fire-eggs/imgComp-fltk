@@ -427,4 +427,5 @@ void showDiff(Fl_Image* imgL, Fl_Image* imgR, bool stretch)
     free(outbufL);
     free(outbufR);
     outbufL = outbufR = NULL;
+    _disp->value(0);
 }
