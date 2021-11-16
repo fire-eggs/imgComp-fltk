@@ -1,3 +1,7 @@
+#pragma GCC diagnostic push
+#pragma ide diagnostic ignored "bugprone-reserved-identifier"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Hold_Browser.H>
@@ -51,14 +55,54 @@ Fl_Menu_Bar* _menu;
 
 char *_loadfile; // hacky
 
-//SharedImageExt* _leftImage;
-//SharedImageExt* _rightImage;
 Fl_Image* _leftImage;
 Fl_Image* _rightImage;
 
 int widths[] = {50, 340, 340, 0};
 
 // NOTE: relying on toggle menus auto initialized to OFF
+
+class NPBtn : public Fl_Button
+{
+    /*
+     * This class is a hack to pass the up/down arrows directly to the listbox.
+     * When the user presses the Next/Prev buttons, focus is on the button; the
+     * next up/down arrow presses need to be done twice to move within the listbox.
+     * This class fixes that.
+     */
+    void (*downCB)(Fl_Widget *, void*);
+    void (*upCB)(Fl_Widget *, void*);
+
+public:
+    NPBtn(int x, int y, int w, int h, const char *l = nullptr) : Fl_Button(x,y,w,h,l)
+    {
+        downCB = nullptr;
+        upCB   = nullptr;
+    }
+
+    void setDown( void (*cb)(Fl_Widget *,void*) ) { downCB = cb; }
+    void setUp( void (*cb)(Fl_Widget *,void*) ) { upCB = cb; }
+
+    int handle(int event) override
+    {
+        int res = Fl_Button::handle(event);
+        if (event == FL_KEYDOWN)
+        {
+            auto key = Fl::event_key();
+            if (key == FL_Up)
+            {
+                upCB(nullptr, nullptr);
+                return 0;
+            }
+            if (key == FL_Down && downCB)
+            {
+                downCB(nullptr, nullptr);
+                return 0;
+            }
+        }
+        return res;
+    }
+};
 
 class MainWin : public Fl_Double_Window
 {
@@ -74,8 +118,8 @@ public:
 MainWin* _window;
 
 #define BTN_BOX_HALFHIGH 16
-#define BTN_BOX_HIGH BTN_BOX_HALFHIGH * 2
-#define BTN_HIGH BTN_BOX_HIGH - 6
+#define BTN_BOX_HIGH (BTN_BOX_HALFHIGH * 2)
+#define BTN_HIGH (BTN_BOX_HIGH - 6)
 
 void MainWin::resize(int x, int y, int w, int h)
 {
@@ -626,6 +670,7 @@ void copyBulk_cb(Fl_Widget*, void*)
     int res = fl_ask("This will take a long time, are you sure?");
     if (res == 0)
         return;
+
     size_t count = GetPairCount();
     size_t len = 0;
     for (int i = 0; i < count; i++)
@@ -670,6 +715,7 @@ int handleSpecial(int event)
             break;
         case KBR_DONE_LOAD:
             _window->label("Ready!");
+            Fl::awake();
             load_pairview();
             _listbox->select(1);
             onListClick(0,0);
@@ -768,13 +814,17 @@ int main(int argc, char** argv)
     btnRView->callback(btnViewR_cb);
 
     btnX += 55 + 10;
-    Fl_Button* btnPrev = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
+    auto btnPrev = new NPBtn(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     btnPrev->label("Prev");
     btnPrev->callback(btnPrev_cb);
+    btnPrev->setDown(btnNext_cb);  // pass the down arrow directly to the listbox
+    btnPrev->setUp(btnPrev_cb);    // pass the up arrow directly to the listbox
     btnX += 55;
-    Fl_Button* btnNext = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
+    auto btnNext = new NPBtn(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     btnNext->label("Next");
     btnNext->callback(btnNext_cb);
+    btnNext->setDown(btnNext_cb);
+    btnNext->setUp(btnPrev_cb);
 
     btnX += 60;
     // An invisible widget to be resizable instead of anything else
@@ -816,3 +866,5 @@ void message_cb(void *data) {
     _window->label((const char *)data);
     Fl::flush();
 }
+
+#pragma GCC diagnostic pop
