@@ -492,6 +492,32 @@ void btnViewR_cb(Fl_Widget* w, void* d)
     btnView(false);
 }
 
+void btnHide(bool left)
+{
+    // current selection, "hide" file by removing from all pairs
+    Pair* p = GetCurrentPair();
+    if (!p)
+        return;
+
+    int oldsel = _listbox->value();
+    RemoveMissingFile(left ? p->FileLeftDex : p->FileRightDex);
+    p->valid = false;
+    reloadPairview();
+    _listbox->select(oldsel);
+    onListClick(0, 0); // force onclick
+    _listbox->take_focus(); // focus back to listbox
+}
+
+void btnHideL_cb(Fl_Widget* w, void* d)
+{
+    btnHide(true);
+}
+
+void btnHideR_cb(Fl_Widget* w, void* d)
+{
+    btnView(false);
+}
+
 void btnDiff(bool left, bool stretch)
 {
     Pair* p = GetCurrentPair();
@@ -793,7 +819,12 @@ int main(int argc, char** argv)
     btnLView->label("View");
     btnLView->callback(btnViewL_cb);
 
-    btnX += 55 + 10;
+    btnX += 55;
+    Fl_Button *btnLHide = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
+    btnLHide->label("Hide");
+    btnLHide->callback(btnHideL_cb);
+
+    btnX += 55 + 15;
     _btnDiff = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     _btnDiff->label("Diff");
     _btnDiff->callback(btnDiff_cb);
@@ -803,7 +834,7 @@ int main(int argc, char** argv)
     btnDiffS->label("Diff - Stretch");
     btnDiffS->callback(btnDiffS_cb);
 
-    btnX += 105 + 10;
+    btnX += 105 + 15;
     _btnRDup = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     _btnRDup->label("Dup");
     _btnRDup->callback(btnDupR_cb);
@@ -813,12 +844,18 @@ int main(int argc, char** argv)
     btnRView->label("View");
     btnRView->callback(btnViewR_cb);
 
-    btnX += 55 + 10;
+    btnX += 55;
+    Fl_Button *btnRHide = new Fl_Button(btnX, BTNBOXY + 3, 50, BTN_HIGH);
+    btnRHide->label("Hide");
+    btnRHide->callback(btnHideR_cb);
+
+    btnX += 55 + 15;
     auto btnPrev = new NPBtn(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     btnPrev->label("Prev");
     btnPrev->callback(btnPrev_cb);
     btnPrev->setDown(btnNext_cb);  // pass the down arrow directly to the listbox
     btnPrev->setUp(btnPrev_cb);    // pass the up arrow directly to the listbox
+
     btnX += 55;
     auto btnNext = new NPBtn(btnX, BTNBOXY + 3, 50, BTN_HIGH);
     btnNext->label("Next");
