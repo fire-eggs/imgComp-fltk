@@ -23,6 +23,7 @@
 extern int sourceId;    // hacky
 extern char* _loadfile;  // hacky
 extern bool filterSame; // hacky
+extern bool filterRotation;
 
 void* proc_func(void *p)
 {
@@ -44,7 +45,7 @@ void* proc_func(void *p)
     Fl::handle_(KBR_START_SORT, 0);
    
     // viewing pairlist may be filtered [no matching sources]
-    FilterAndSort(filterSame);
+    FilterAndSort(filterSame, filterRotation);
 
     bool anyStandalone = checkAnyStandalone();
     if (!anyStandalone)

@@ -92,7 +92,7 @@ FileData* GetFD(int dex);
 
 void ClearPairList();
 void ClearData();
-void FilterAndSort(bool);
+void FilterAndSort(bool, bool);
 
 bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath);
 void RemoveMissingFile(int filedex);

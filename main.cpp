@@ -29,6 +29,7 @@ void load_cb(Fl_Widget*, void*);
 void quit_cb(Fl_Widget*, void*);
 void clear_cb(Fl_Widget*, void*);
 void filter_cb(Fl_Widget*, void*);
+void filterR_cb(Fl_Widget*, void*);
 void lockL_cb(Fl_Widget*, void*);
 void lockR_cb(Fl_Widget*, void*);
 void viewLog_cb(Fl_Widget*, void*);
@@ -43,6 +44,8 @@ Prefs* _PREFS;
 // TODO push into MainWin class?
 int sourceId;
 bool filterSame;
+bool filterRotation;
+
 Fl_Browser* _listbox;
 Fl_Box* _leftImgView;
 Fl_Box* _rightImgView;
@@ -232,6 +235,7 @@ Fl_Menu_Item mainmenuItems[] =
 
     {"&Options", 0, 0, 0, FL_SUBMENU},
     {"Fi&lter Same Phash", 0, filter_cb, 0, FL_MENU_TOGGLE},
+    {"Filter Rotation Matches", 0, filterR_cb, 0, FL_MENU_TOGGLE},
     {"Lock Left Dup Button", 0, lockL_cb, 0, FL_MENU_TOGGLE},
     {"Lock Right Dup Button", 0, lockR_cb, 0, FL_MENU_TOGGLE},
     {"View log file ...", 0, viewLog_cb, 0},
@@ -598,12 +602,21 @@ void filter_cb(Fl_Widget* w, void* d)
     filterSame = !filterSame;
 
     clear_controls();
-    FilterAndSort(filterSame);
+    FilterAndSort(filterSame, filterRotation);
     load_pairview();
     _listbox->select(1);
     onListClick(0, 0);
 }
 
+void filterR_cb(Fl_Widget*, void*)
+{
+    filterRotation = !filterRotation;
+    clear_controls();
+    FilterAndSort(filterSame, filterRotation);
+    load_pairview();
+    _listbox->select(1);
+    onListClick(0, 0);
+}
 void lockL_cb(Fl_Widget* w, void* d)
 {
     // if left 'Dup' button enabled, disable it
@@ -778,6 +791,7 @@ int main(int argc, char** argv)
     _mrp = new MostRecentPaths(_PREFS->_prefs);
 
     filterSame = false;
+    filterRotation = false;
 
     fl_register_images();
     Fl_Image_Display::set_gamma(2.2f);

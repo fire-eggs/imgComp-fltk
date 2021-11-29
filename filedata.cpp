@@ -326,7 +326,7 @@ int Compare(Pair *me, Pair* other)
     return false;
 }
 
-std::vector<Pair*> *FilterMatchingSources()
+std::vector<Pair*> *FilterMatchingSources(bool same, bool rotation)
 {
     std::vector<Pair*> *viewlist = new std::vector<Pair*>();
     for (int i = 0; i < _pairlist->size(); i++)
@@ -335,13 +335,16 @@ std::vector<Pair*> *FilterMatchingSources()
         FileData* dataL = _data.Get(p->FileLeftDex);
         FileData* dataR = _data.Get(p->FileRightDex);
         
-        if (dataL->Source != dataR->Source)
+        if (same && dataL->Source == dataR->Source)
+            continue;
+        if (rotation && p->rotate)
+            continue;
             viewlist->push_back(p);
     }
     return viewlist;
 }
 
-void FilterAndSort(bool filter)
+void FilterAndSort(bool filterSame, bool filterRotation)
 {
     if (!_pairlist)
         return; 
@@ -349,8 +352,8 @@ void FilterAndSort(bool filter)
     std::sort(_pairlist->begin(), _pairlist->end(), Compare);
 
     // filter
-    if (filter)
-        _viewlist = FilterMatchingSources();
+    if (filterSame || filterRotation)
+        _viewlist = FilterMatchingSources(filterSame, filterRotation);
     else
         _viewlist = new std::vector<Pair*>(*_pairlist);
 }
