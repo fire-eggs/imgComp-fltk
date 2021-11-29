@@ -350,6 +350,9 @@ void FilterAndSort(bool filterSame, bool filterRotation)
         return; 
 
     std::sort(_pairlist->begin(), _pairlist->end(), Compare);
+    if (_viewlist && _viewlist != _pairlist)
+        delete _viewlist;
+    _viewlist = NULL;
 
     // filter
     if (filterSame || filterRotation)
