@@ -2,6 +2,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Image_Surface.H>
 #include <FL/fl_ask.H>
+#include <FL/fl_draw.H>
 
 #include "ViewWin.h"
 #include "Fl_Image_Display.H"
@@ -23,6 +24,10 @@ Fl_RGB_Image* _diffImageL;
 Fl_RGB_Image* _diffImageR;
 
 extern Prefs* _PREFS;
+
+#ifdef DEBUG
+bool savetocolorpng( Fl_RGB_Image* src, const char* fpath );
+#endif
 
 class ViewWin : public Fl_Double_Window
 {
@@ -317,29 +322,55 @@ bool doDiff(Fl_Image* imgL, Fl_Image* imgR)
     return true;
 }
 
+Fl_Image *to24bit(Fl_Image* img)
+{
+    Fl_Image_Surface *imgSurf = new Fl_Image_Surface(img->w(), img->h());
+    Fl_Surface_Device::push_current(imgSurf);
+
+    fl_color(FL_WHITE);
+    fl_rectf(0,0,img->w(),img->h());    // draw filled rectangle as background
+
+    Fl_Anim_GIF_Image *animgif = dynamic_cast<Fl_Anim_GIF_Image *>(img);
+    if (animgif) {
+        animgif->frame(0);
+        animgif->Fl_Pixmap::draw(0, 0);
+    }
+    else
+        img->draw(0, 0);
+    Fl_RGB_Image *ret = imgSurf->image();
+    Fl_Surface_Device::pop_current();
+    delete imgSurf;
+    return ret;
+}
+
 bool doDiff1(Fl_Image* imgL, Fl_Image* imgR, bool stretch, bool release)
 {
     Fl_Pixmap *pimg = dynamic_cast<Fl_Pixmap *>(imgL);
     if (pimg)
     {
+        imgL = to24bit(imgL); // TODO memory leak?
+        /*
         Fl_Image_Surface *imgSurf = new Fl_Image_Surface(imgL->w(), imgL->h());
         Fl_Surface_Device::push_current(imgSurf);
         imgL->draw(0, 0);
         imgL = imgSurf->image();
         Fl_Surface_Device::pop_current();
         delete imgSurf;
+         */
     }
     pimg = dynamic_cast<Fl_Pixmap *>(imgR);
     if (pimg)
     {
+        imgR = to24bit(imgR); // TODO memory leak?
+/*
         Fl_Image_Surface *imgSurf = new Fl_Image_Surface(imgR->w(), imgR->h());
         Fl_Surface_Device::push_current(imgSurf);
         imgR->draw(0, 0);
         imgR = imgSurf->image();
         Fl_Surface_Device::pop_current();
         delete imgSurf;
+*/
     }
-
 
     // Deal with stretch
     if (!stretch)
@@ -362,12 +393,26 @@ bool doDiff1(Fl_Image* imgL, Fl_Image* imgR, bool stretch, bool release)
     return res;
 }
 
-bool diff(Pair* toview, bool stretch, Fl_Image* imgL, Fl_Image* imgR)
+bool diff(bool stretch, Fl_Image* imgL, Fl_Image* imgR)
 {
-    if (imgL->d() != imgR->d())
+    if (imgL->d() != imgR->d() || imgL->d() == 4)
     {
-        fl_alert("Mixed image depths NYI");
-        return false; // punt on mixed depths for now
+        // Do this for 32-bit images as well, because black line drawings w/transparency goto solid black otherwise
+//        fl_alert("Mixed image depths");
+
+        Fl_Image *newL = to24bit(imgL);
+        Fl_Image *newR = to24bit(imgR);
+#ifdef DEBUG
+        savetocolorpng((Fl_RGB_Image *)newL,"/home/kevin/temp/mixL.png");
+        savetocolorpng((Fl_RGB_Image *)newR,"/home/kevin/temp/mixR.png");
+#endif
+
+        bool res = doDiff1(newL, newR, stretch, false);
+
+        delete newL;
+        delete newR;
+
+        return res;
     }
 
     return doDiff1(imgL, imgR, stretch, false);
@@ -418,7 +463,7 @@ void showDiff(Pair* toview, bool stretch)
 
 void showDiff(Fl_Image* imgL, Fl_Image* imgR, bool stretch)
 {
-    if (!diff(NULL, stretch, imgL, imgR))
+    if (!diff(stretch, imgL, imgR))
         return;
     diffMode = true;
     showView();
@@ -429,3 +474,88 @@ void showDiff(Fl_Image* imgL, Fl_Image* imgR, bool stretch)
     outbufL = outbufR = NULL;
     _disp->value(0);
 }
+
+#ifdef DEBUG
+#include "png/png.h"
+#include <stdio.h>
+
+bool savetocolorpng( Fl_RGB_Image* src, const char* fpath )
+{
+    if ( src == NULL )
+        return false;
+
+    if ( src->d() < 3 )
+        return false;
+
+    FILE* fp = fopen( fpath, "wb" );
+
+    if ( fp == NULL )
+        return false;
+
+    png_structp png_ptr     = NULL;
+    png_infop   info_ptr    = NULL;
+    png_bytep   row         = NULL;
+
+    png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
+    if ( png_ptr != NULL )
+    {
+        info_ptr = png_create_info_struct( png_ptr );
+        if ( info_ptr != NULL )
+        {
+            if ( setjmp( png_jmpbuf( (png_ptr) ) ) == 0 )
+            {
+                int mx = src->w();
+                int my = src->h();
+                int pd = 3;
+
+                png_init_io( png_ptr, fp );
+                png_set_IHDR( png_ptr,
+                              info_ptr,
+                              mx,
+                              my,
+                              8,
+                              PNG_COLOR_TYPE_RGB,
+                              PNG_INTERLACE_NONE,
+                              PNG_COMPRESSION_TYPE_BASE,
+                              PNG_FILTER_TYPE_BASE);
+
+                png_write_info( png_ptr, info_ptr );
+
+                row = (png_bytep)malloc( src->w() * sizeof( png_byte ) * 3 );
+                if ( row != NULL )
+                {
+                    const char* buf = src->data()[0];
+                    int bque = 0;
+
+                    for( int y=0; y<my; y++ )
+                    {
+                        for( int x=0; x<mx; x++ )
+                        {
+                            row[ (x*3) + 0 ] = buf[ bque + 0 ];
+                            row[ (x*3) + 1 ] = buf[ bque + 1 ];
+                            row[ (x*3) + 2 ] = buf[ bque + 2 ];
+                            bque += pd;
+                        }
+
+                        png_write_row( png_ptr, row );
+                    }
+
+                    png_write_end( png_ptr, NULL );
+
+                    fclose( fp );
+
+                    free(row);
+                }
+
+                png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+                png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+
+                return true;
+            }
+        }
+    }
+
+    fclose(fp);
+    return false;
+}
+#endif
