@@ -38,6 +38,8 @@ void copyBulk_cb(Fl_Widget*, void*);
 void clear_controls();
 void updateBoxImages();
 void onListClick(Fl_Widget* w, void* d);
+void cbSupercedeLeft(Fl_Widget *,void*);
+void cbDanbooruHideLeft(Fl_Widget *,void*);
 
 Prefs* _PREFS;
 
@@ -241,6 +243,11 @@ Fl_Menu_Item mainmenuItems[] =
     {"View log file ...", 0, viewLog_cb, 0},
     {"Copy filenames to clipboard", 0, copyToClip_cb, 0},
     {"Copy all data to clipboard", 0, copyBulk_cb, 0},
+    {0},
+
+    {"&Actions", 0, 0, 0, FL_SUBMENU},
+    {"Supercede left", 0, cbSupercedeLeft, 0},
+    {"Danbooru Hide Left", 0, cbDanbooruHideLeft, 0},
     {0},
 
     {0}
@@ -683,6 +690,58 @@ void quit_cb(Fl_Widget* , void* )
 void viewLog_cb(Fl_Widget* , void* )
 {
     // TODO popup the log file
+}
+
+void cbSupercedeLeft(Fl_Widget *,void*)
+{
+    // The "left" image is to be superceded by the "right".
+    // 1. Mark the left image as dup.
+    // 2. Move "right.x" to "left.x".
+
+    Pair* p = GetCurrentPair();
+    if (!p)
+        return;
+    auto pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    auto pathR = GetFD(p->FileRightDex)->Name->c_str();
+
+    if (MoveFile("%s/dup%d_%s", pathR, pathL))
+    {
+        auto rightext = fl_filename_ext(pathR);
+        auto newleft = fl_filename_setext((char *) pathL, rightext);
+
+        //int res = OSCopyFile(pathR, newleft);
+        int res = cp(newleft, pathR);
+        if (res)
+            log("cbSupercedeLeft: failed to cp %s to %s (%d)[%s]", pathR, newleft, errno, strerror(errno));
+        else
+            btnDup(false); // mark "old" right as dup
+    }
+}
+
+void cbDanbooruHideLeft(Fl_Widget *, void *)
+{
+    // The "left" image is to be hidden by Danbooru rules. This currently
+    // requires a hard-coded destination tree for the "hidden".
+    // TODO consider unix-style hidden
+
+    std::string hiddenPath = "/mnt/trolle/db2020_aside/hidden/";
+
+    Pair* p = GetCurrentPair();
+    if (!p)
+        return;
+   std::string pathL = GetFD(p->FileLeftDex)->Name->c_str();
+
+   auto extpos = pathL.rfind('.');
+   auto digits = pathL.substr(extpos-3, 3);
+   auto fnpos = pathL.rfind('/');
+   auto filename = pathL.substr(fnpos+1);
+   auto destpath = hiddenPath + "0" + digits + "/" + filename;
+
+    int res = cp(destpath.c_str(), pathL.c_str());
+    if (res)
+        log("cbDanbooruHideLeft: failed to cp %s to %s (%d)[%s]", pathL.c_str(), destpath.c_str(), errno, strerror(errno));
+    else
+        btnDup(true);
 }
 
 void copyToClip_cb(Fl_Widget*, void*)

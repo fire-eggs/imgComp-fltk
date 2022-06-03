@@ -197,7 +197,7 @@ int phashHamDist(unsigned long long val1, unsigned long long val2)
 
 // Throw out any pair where delta exceeds 6
 static const int MINTHRESHOLD =  0; // Hamming distance always a multiple of two
-static const int MAXTHRESHOLD = 17; // Hamming distance always a multiple of two
+static const int MAXTHRESHOLD = 13; // Hamming distance always a multiple of two
 
 std::mutex _pair_lock;
 
@@ -439,3 +439,106 @@ void compareArchives() {}
 void pixVsArchives() {}
 
 bool checkAnyStandalone() { return true; }
+
+
+#include <fcntl.h>
+#include <unistd.h>
+#if defined(__APPLE__) || defined(__FreeBSD__)
+#include <copyfile.h>
+#else
+#include <sys/sendfile.h>
+#endif
+
+int OSCopyFile(const char* source, const char* destination)
+{
+    int input, output;
+    if ((input = open(source, O_RDONLY)) == -1)
+    {
+        return -1;
+    }
+    if ((output = creat(destination, 0660)) == -1)
+    {
+        close(input);
+        return -1;
+    }
+
+    //Here we use kernel-space copying for performance reasons
+#if defined(__APPLE__) || defined(__FreeBSD__)
+    //fcopyfile works on FreeBSD and OS X 10.5+
+    int result = fcopyfile(input, output, 0, COPYFILE_ALL);
+#else
+    //sendfile will work with non-socket output (i.e. regular file) on Linux 2.6.33+
+    off_t bytesCopied = 0;
+    struct stat fileinfo = {0};
+    fstat(input, &fileinfo);
+    int result = sendfile(output, input, &bytesCopied, fileinfo.st_size);
+#endif
+
+    close(input);
+    close(output);
+
+    return result;
+}
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
+int cp(const char *to, const char *from)
+{
+    int fd_to, fd_from;
+    char buf[4096];
+    ssize_t nread;
+    int saved_errno;
+
+    fd_from = open(from, O_RDONLY);
+    if (fd_from < 0)
+        return -1;
+
+    fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);
+    if (fd_to < 0)
+        goto out_error;
+
+    while (nread = read(fd_from, buf, sizeof buf), nread > 0)
+    {
+        char *out_ptr = buf;
+        ssize_t nwritten;
+
+        do {
+            nwritten = write(fd_to, out_ptr, nread);
+
+            if (nwritten >= 0)
+            {
+                nread -= nwritten;
+                out_ptr += nwritten;
+            }
+            else if (errno != EINTR)
+            {
+                goto out_error;
+            }
+        } while (nread > 0);
+    }
+
+    if (nread == 0)
+    {
+        if (close(fd_to) < 0)
+        {
+            fd_to = -1;
+            goto out_error;
+        }
+        close(fd_from);
+
+        /* Success! */
+        return 0;
+    }
+
+    out_error:
+    saved_errno = errno;
+
+    close(fd_from);
+    if (fd_to >= 0)
+        close(fd_to);
+
+    errno = saved_errno;
+    return -1;
+}
