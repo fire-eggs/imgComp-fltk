@@ -727,8 +727,11 @@ void Fl_Anim_GIF_Image::color_average(Fl_Color c_, float i_) {
 
 
 /*virtual*/
-Fl_Image *Fl_Anim_GIF_Image::copy(int W_, int H_) {
+Fl_Image* Fl_Anim_GIF_Image::copy (int W_, int H_) const
+{
     Fl_Anim_GIF_Image *copied = new Fl_Anim_GIF_Image();
+    
+#if 0 // TODO impact?    
     // copy/resize the base image (Fl_Pixmap)
     // Note: this is not really necessary, if the draw()
     //       method never calls the base class.
@@ -743,6 +746,7 @@ Fl_Image *Fl_Anim_GIF_Image::copy(int W_, int H_) {
         w(_fi->canvas_w);
         h(_fi->canvas_h);
     }
+#endif
 
     copied->w(W_);
     copied->h(H_);
@@ -750,11 +754,9 @@ Fl_Image *Fl_Anim_GIF_Image::copy(int W_, int H_) {
     copied->_fi->canvas_h = H_;
     copied->_fi->copy(*_fi); // copy the meta data
 
-    copied->_frame = 0; // 20210921 : if use Fl_Anim_GIF_Image as a container for not animated GIF, nothing happens if this is not set
-
     copied->_uncache = _uncache; // copy 'inherits' frame uncache status
     copied->_valid = _valid && copied->_fi->frames_size == _fi->frames_size;
-    scale_frame(); // scale current frame now
+    copied->scale_frame(); // scale current frame now // TODO scaled original; impact?
     if (copied->_valid && _frame >= 0 && !Fl::has_timeout(cb_animate, copied))
         copied->start(); // start if original also was started
     return copied;
