@@ -757,7 +757,7 @@ int handleSpecial(int event)
             Fl::awake();
             load_pairview();
             _listbox->select(1);
-            onListClick(0,0);
+            //onListClick(0,0);
             Fl::awake();
             //Fl::flush(); // do NOT flush here! the GUI dies
             break;
