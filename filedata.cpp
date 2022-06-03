@@ -334,12 +334,13 @@ std::vector<Pair*> *FilterMatchingSources(bool same, bool rotation)
         Pair *p = _pairlist->at(i);
         FileData* dataL = _data.Get(p->FileLeftDex);
         FileData* dataR = _data.Get(p->FileRightDex);
-        
+
         if (same && dataL->Source == dataR->Source)
             continue;
         if (rotation && p->rotate)
             continue;
-            viewlist->push_back(p);
+
+        viewlist->push_back(p);
     }
     return viewlist;
 }
@@ -350,6 +351,7 @@ void FilterAndSort(bool filterSame, bool filterRotation)
         return; 
 
     std::sort(_pairlist->begin(), _pairlist->end(), Compare);
+
     if (_viewlist && _viewlist != _pairlist)
         delete _viewlist;
     _viewlist = NULL;
@@ -400,7 +402,7 @@ bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
         {
             int res = rename(srcpath, buff);
             if (res)
-                log("MoveFile: failed to rename to target file");
+                log("MoveFile: failed to rename to target file (%d)", errno);
             else
             {
                 log("MoveFile: success");
