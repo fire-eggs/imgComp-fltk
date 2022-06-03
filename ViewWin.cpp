@@ -201,8 +201,21 @@ void makeWin()
     _win->resizable(_disp);
 }
 
+bool isActive = false;
+
+void reallyShowView()
+{
+    _win->show();
+    ViewImage(); // NOTE: title bar doesn't update until shown
+    isActive = true;
+    while (_win->shown())
+        Fl::wait();
+    isActive = false;
+}
+
 void showView(Fl_Image* leftI, Fl_Image* rightI, bool startLeft)
 {
+    if (isActive) return;
     if (!_win)
         makeWin();
 
@@ -214,15 +227,12 @@ void showView(Fl_Image* leftI, Fl_Image* rightI, bool startLeft)
     _showLeft = startLeft;
     _disp->scale(zoomFit ? 0.0 : 1.0);
 
-    _win->show();
-    ViewImage(); // NOTE: title bar doesn't update until shown
-
-    while (_win->shown())
-        Fl::wait();
+    reallyShowView();
 }
 
 void showView(Pair* toview, bool startLeft)
 {
+    if (isActive) return;
     if (!_win)
         makeWin();
 
@@ -233,25 +243,18 @@ void showView(Pair* toview, bool startLeft)
     _showLeft = startLeft;
     _disp->scale(zoomFit ? 0.0 : 1.0);
     _disp->label("");
-
-    ViewImage(); // NOTE: title bar doesn't update until shown
-
-    _win->show();
-    while (_win->shown())
-        Fl::wait();
+    reallyShowView();
 }
 
 void showView()
 {
+    if (isActive) return;
     if (!_win)
         makeWin();
     _disp->scale(zoomFit ? 0.0 : 1.0);
     _view = _diffImageL;
     _viewing = NULL;
-    _win->show();
-    ViewImage(); // NOTE: title bar doesn't update until shown
-    while (_win->shown())
-        Fl::wait();
+    reallyShowView();
 }
 
 void setOutPixel(unsigned char* outbuf, unsigned long offset, int diff, 
@@ -450,6 +453,8 @@ bool diff(Pair* toview, bool stretch)
 
 void showDiff(Pair* toview, bool stretch)
 {
+    if (isActive) return;
+    
     if (!diff(toview, stretch))
         return;
     diffMode = true;
@@ -463,6 +468,8 @@ void showDiff(Pair* toview, bool stretch)
 
 void showDiff(Fl_Image* imgL, Fl_Image* imgR, bool stretch)
 {
+    if (isActive) return;
+
     if (!diff(stretch, imgL, imgR))
         return;
     diffMode = true;
