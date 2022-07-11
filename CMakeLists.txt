@@ -22,12 +22,17 @@ find_library(FLTK fltk /home/kevin/proj/fltk/fltk/lib)
 find_library(FLTK_IMG fltk_images /home/kevin/proj/fltk/fltk/lib)
 # Using own [modified] PNG library to prevent output to console
 find_library(FLTK_PNG fltk_png /home/kevin/proj/fltk/fltk/lib)
+find_library(FLTK_JPG fltk_jpeg    /home/kevin/fltk/build/lib)
 
-set(LINK_FLAGS -no-pie -fopenmp -lX11 -lXext -lm -ldl -lXinerama -lXcursor -lXi
-        -lXrender -lXfixes -ljpeg -lz -lXft -lfontconfig -pthread
-        -lpangocairo-1.0 -lpango-1.0 -lcairo -lpangoft2-1.0 -lgobject-2.0
-        -lglib-2.0 -lharfbuzz -lpangoxft-1.0 -lpthread -lwebp -lwebpdemux)
+#set(LINK_FLAGS -no-pie -fopenmp -lX11 -lXext -lm -ldl -lXinerama -lXcursor -lXi
+#        -lXrender -lXfixes -ljpeg -lz -lXft -lfontconfig -pthread
+#        -lpangocairo-1.0 -lpango-1.0 -lcairo -lpangoft2-1.0 -lgobject-2.0
+#        -lglib-2.0 -lharfbuzz -lpangoxft-1.0 -lpthread -lwebp -lwebpdemux)
+set(LINK_FLAGS -no-pie -fopenmp -lX11 -lXext -lm -ldl -lXinerama -lXcursor
+        -lXrender -lXfixes -lz -lXft -lfontconfig -pthread
+        -lpthread -lwebp -lwebpdemux
+        )
 
-target_link_libraries(imgcomp LINK_PUBLIC ${FLTK} ${FLTK_IMG} ${FLTK_PNG} ${LINK_FLAGS} )
+target_link_libraries(imgcomp LINK_PUBLIC ${FLTK} ${FLTK_IMG} ${FLTK_PNG} ${FLTK_JPG} ${LINK_FLAGS} )
 
 install(TARGETS imgcomp RUNTIME DESTINATION bin)
