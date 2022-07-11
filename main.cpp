@@ -387,6 +387,19 @@ void updateBoxImages()
     _rightImgView->redraw();
 }
 
+bool isAnimated(Fl_Image *img)
+{
+    // Determine if an image is animated or not.
+    // NOTE: relies on the animated webp having been converted to an animated gif
+    if (!img)
+        return false;
+    Fl_Anim_GIF_Image *gif = dynamic_cast<Fl_Anim_GIF_Image*>(img);
+    if (!gif)
+        return false;
+    return gif->is_animated();
+}
+
+
 void onListClick(Fl_Widget* w, void* d)
 {
     if (_listbox->size() < 1) // list is now empty, done
@@ -414,9 +427,14 @@ void onListClick(Fl_Widget* w, void* d)
     _leftImage = loadFile((char *)pathL,_leftImgView); //SharedImageExt::LoadImage(pathL);
     _rightImage = loadFile((char *)pathR,_rightImgView); //SharedImageExt::LoadImage(pathR);
 
+    // .phashc file is supposed to have a flag indicating the image is animated or not.
+    // right now 20220612 that is not the case. discard pair when mismatch of animation   
+    bool leftAnim = isAnimated(_leftImage);
+    bool rightAnim = isAnimated(_rightImage);
+    
     // _leftImage or _rightImage may be null [file missing]
     // Force selection of next entry
-    if (!_leftImage || !_rightImage)
+    if (!_leftImage || !_rightImage || (leftAnim != rightAnim))
     {
         p->valid = false;
 
