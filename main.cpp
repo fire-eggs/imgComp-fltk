@@ -544,7 +544,7 @@ void btnHideL_cb(Fl_Widget* w, void* d)
 
 void btnHideR_cb(Fl_Widget* w, void* d)
 {
-    btnView(false);
+    btnHide(false);
 }
 
 void btnDiff(bool left, bool stretch)
