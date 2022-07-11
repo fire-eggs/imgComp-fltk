@@ -367,9 +367,6 @@ void FilterAndSort(bool filterSame, bool filterRotation)
 
 bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
 {
-    //printf("MoveFile: srcpath: %s\n", srcpath);
-    //printf("MoveFile: destpath: %s\n", destpath);
-
     // rename the source file to be a duplicate of the destination
     // i.e. <sourcebase>/<srcfile> to <sourcebase>/dup0_<destfile>
     
@@ -392,10 +389,8 @@ bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
     for (i = 0; i < 10; i++)
     {
         sprintf(buff, nameForm, spath, i, destfname);
-        
-        //printf("MoveFile: outpath: %s\n", buff);       
-        
-        log("MoveFile: attempt to rename %s to %s", srcpath, buff);
+                
+        log("MoveFile: attempt to rename \n%s to \n%s", srcpath, buff);
         if (fl_access(buff, F_OK) != -1)
             log("MoveFile: target file already exists");
         else
@@ -405,7 +400,6 @@ bool MoveFile(const char *nameForm, const char *destpath, const char *srcpath)
                 log("MoveFile: failed to rename to target file (%d)", errno);
             else
             {
-                log("MoveFile: success");
                 break; // success
             }
         }
@@ -440,7 +434,7 @@ void pixVsArchives() {}
 
 bool checkAnyStandalone() { return true; }
 
-
+/*
 #include <fcntl.h>
 #include <unistd.h>
 #if defined(__APPLE__) || defined(__FreeBSD__)
@@ -479,11 +473,13 @@ int OSCopyFile(const char* source, const char* destination)
 
     return result;
 }
+*/
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 
+// This is necessary rather than runtime version to handle copies across the network (?)
 int cp(const char *to, const char *from)
 {
     int fd_to, fd_from;

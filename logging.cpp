@@ -63,3 +63,9 @@ void log(const char* fmt, ...)
     fclose(logf);
 }
 
+void showLog()
+{
+    char buff [(int)(MAXNAMLEN*2.5)];
+    sprintf(buff, "xdg-open '%s'", _logpath);
+    system(buff);
+}

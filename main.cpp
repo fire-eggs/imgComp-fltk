@@ -689,7 +689,7 @@ void quit_cb(Fl_Widget* , void* )
 
 void viewLog_cb(Fl_Widget* , void* )
 {
-    // TODO popup the log file
+    showLog();
 }
 
 void cbSupercedeLeft(Fl_Widget *,void*)
@@ -709,7 +709,7 @@ void cbSupercedeLeft(Fl_Widget *,void*)
         auto rightext = fl_filename_ext(pathR);
         auto newleft = fl_filename_setext((char *) pathL, rightext);
 
-        //int res = OSCopyFile(pathR, newleft);
+        log("Supercede \n%s with \n%s", newleft, pathR);
         int res = cp(newleft, pathR);
         if (res)
             log("cbSupercedeLeft: failed to cp %s to %s (%d)[%s]", pathR, newleft, errno, strerror(errno));
@@ -722,21 +722,23 @@ void cbDanbooruHideLeft(Fl_Widget *, void *)
 {
     // The "left" image is to be hidden by Danbooru rules. This currently
     // requires a hard-coded destination tree for the "hidden".
-    // TODO consider unix-style hidden
+    // TODO consider unix-style hidden?
 
     std::string hiddenPath = "/mnt/trolle/db2020_aside/hidden/";
 
     Pair* p = GetCurrentPair();
     if (!p)
         return;
-   std::string pathL = GetFD(p->FileLeftDex)->Name->c_str();
+    std::string pathL = GetFD(p->FileLeftDex)->Name->c_str();
 
-   auto extpos = pathL.rfind('.');
-   auto digits = pathL.substr(extpos-3, 3);
-   auto fnpos = pathL.rfind('/');
-   auto filename = pathL.substr(fnpos+1);
-   auto destpath = hiddenPath + "0" + digits + "/" + filename;
+    auto extpos = pathL.rfind('.');
+    auto digits = pathL.substr(extpos-3, 3);
+    auto fnpos = pathL.rfind('/');
+    auto filename = pathL.substr(fnpos+1);
+    auto destpath = hiddenPath + "0" + digits + "/" + filename;
 
+    log("Hide left: \n%s to \n%s", pathL.c_str(), destpath.c_str());
+   
     int res = cp(destpath.c_str(), pathL.c_str());
     if (res)
         log("cbDanbooruHideLeft: failed to cp %s to %s (%d)[%s]", pathL.c_str(), destpath.c_str(), errno, strerror(errno));

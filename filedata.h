@@ -101,5 +101,5 @@ const char* GetActualPath(Pair* p, bool left);
 
 bool checkAnyStandalone();
 
-int OSCopyFile(const char* source, const char* destination);
+//int OSCopyFile(const char* source, const char* destination);
 int cp(const char *to, const char *from);

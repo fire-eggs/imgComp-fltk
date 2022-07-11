@@ -11,3 +11,5 @@
 void initlog(const char*);
 
 void log(const char* fmt, ...);
+
+void showLog();
