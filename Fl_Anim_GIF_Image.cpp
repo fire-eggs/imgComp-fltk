@@ -644,7 +644,7 @@ Fl_Anim_GIF_Image::Fl_Anim_GIF_Image(const char* name, int loopC, int cw, int ch
     _canvas = nullptr;
     _frame = -1;
     _uncache = false;
-    _speed = 1;
+    _speed = 1.0;
 
     _fi->optimize_mem = false;
 
@@ -731,20 +731,20 @@ Fl_Image* Fl_Anim_GIF_Image::copy (int W_, int H_) const
 {
     Fl_Anim_GIF_Image *copied = new Fl_Anim_GIF_Image();
     
-#if 0 // TODO impact?    
+#if 0    
     // copy/resize the base image (Fl_Pixmap)
     // Note: this is not really necessary, if the draw()
     //       method never calls the base class.
     if (_fi->frames_size) {
-        w(_fi->frames[0].w);
-        h(_fi->frames[0].h);
+        //w(_fi->frames[0].w);
+        //h(_fi->frames[0].h);
         Fl_Pixmap *gif = (Fl_Pixmap *)Inherited::copy(W_, H_);
         copied->Inherited::data(gif->data(), gif->count());
         copied->alloc_data = gif->alloc_data;
         gif->alloc_data = 0;
         delete gif;
-        w(_fi->canvas_w);
-        h(_fi->canvas_h);
+        //w(_fi->canvas_w);
+        //h(_fi->canvas_h);
     }
 #endif
 
@@ -753,7 +753,8 @@ Fl_Image* Fl_Anim_GIF_Image::copy (int W_, int H_) const
     copied->_fi->canvas_w = W_;
     copied->_fi->canvas_h = H_;
     copied->_fi->copy(*_fi); // copy the meta data
-
+    copied->frame(0); // 20220611 nothing shows for a still GIF unless the frame is initialized
+    
     copied->_uncache = _uncache; // copy 'inherits' frame uncache status
     copied->_valid = _valid && copied->_fi->frames_size == _fi->frames_size;
     copied->scale_frame(); // scale current frame now // TODO scaled original; impact?
